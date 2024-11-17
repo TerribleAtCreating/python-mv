@@ -1,0 +1,7 @@
+{
+    "framerate": 30,
+    "bars": 25,
+    "spacing": 5,
+    "lerp": 0.75,
+    "background": "greenscreen.png"
+}
