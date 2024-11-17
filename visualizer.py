@@ -4,25 +4,22 @@ import math
 import random
 import string
 import json
-import logging
+import wave
 
 try:
-    import wave
+    import ffmpeg
     from matplotlib import image
     import numpy
     import matplotlib.pyplot as plt
-    import PIL
+    import PIL 
     from PIL import Image
     from PIL import ImageDraw
     from alive_progress import alive_bar
-    import ffmpeg
 except ImportError:
-    os.system('python -m pip install wave')
-    os.system('python -m pip install matplotlib')
+    os.system('python -m pip install ffmpeg-python')
     os.system('python -m pip install numpy')
     os.system('python -m pip install pillow')
-
-    os.system('python -m pip install ffmpeg-python')
+    os.system('python -m pip install matplotlib')
     os.system('python -m pip install alive-progress')
     print('Missing modules installed, please restart')
     quit()
@@ -56,7 +53,6 @@ if settings is None:
                 'bars': bars,
                 'spacing': bar_spacing,
                 'lerp': lerp_alpha,
-                'freqExp': freq_exp,
                 'background': background
                 }, fp)
 else:
@@ -64,7 +60,6 @@ else:
     bars = settings['bars']
     bar_spacing = settings['spacing']
     lerp_alpha = settings['lerp']
-    freq_exp = settings['freqExp']
     background = settings['background']
     
 sample_rate = wave_object.getframerate()
