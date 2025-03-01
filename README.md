@@ -23,7 +23,7 @@ You can add in a background image if you like, but I personally recommend using 
 It basically takes in audio, and gives you a video with all the visuals you would need.
 
 ### How do I use this?
-- Install the source code from the releases (not the repository page, those probably aren't ready for release)
+- Install the release zip file and extract it
 - The "presets" folder is where your render settings (excluding audio and output names) are saved
 - The "files" folder is where you'll put your .wav and .png files for rendering
 
