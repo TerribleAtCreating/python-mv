@@ -1,3 +1,3 @@
 @echo off
-python visualizer.py
+python visualizer.pyw
 pause

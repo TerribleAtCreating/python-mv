@@ -1,7 +1,1 @@
-{
-    "framerate": 30,
-    "bars": 25,
-    "spacing": 5,
-    "lerp": 0.75,
-    "background": "greenscreen.png"
-}
+{"video_framerate": "30", "bars": 25, "bar_spacing": 5, "lerp_alpha": 0.75, "background": "greenscreen.png"}
