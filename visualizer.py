@@ -1,6 +1,5 @@
 try:
     import ffmpeg
-    import tkinter
     import numpy
     import matplotlib.pyplot as plt
     import PIL
@@ -11,13 +10,13 @@ except ImportError:
     print("Import error! Please install any missing libraries, then restart the script.")
     quit()
     
-import sys
 import math
 import json
-import tkinter.filedialog
+import tkinter; import tkinter.filedialog; import tkinter.ttk
 import wave
 import re
 import os
+import ctypes
     
 """
 yknow, when i was reading up on pysimplegui i didn't expect to have to pay 100 dollars
@@ -42,16 +41,18 @@ directory = os.curdir
 # Create window
 root = tkinter.Tk()
 root.title("Python-MV")
-root.iconbitmap("pymv.ico")
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('terriac.pythonmv')
+root.iconbitmap("pymv.ico", "pymv.ico")
 
 wave_name = tkinter.StringVar()
 export_name = tkinter.StringVar()
 
-framerate = tkinter.StringVar()
-bars = tkinter.StringVar()
-bar_spacing = tkinter.StringVar()
-lerp_alpha = tkinter.StringVar()
-background = tkinter.StringVar()
+framerate = tkinter.StringVar(value=60)
+bars = tkinter.StringVar(value=25)
+bar_spacing = tkinter.StringVar(value=5)
+lerp_alpha = tkinter.StringVar(value=.75)
+lerp_speed = tkinter.StringVar(value=25)
+background = tkinter.StringVar(value="greenscreen.png")
 
 def toSignalScale(signal):
     if signal < 1:
@@ -74,7 +75,7 @@ def save_preset():
     
     with open(presetPath, 'w') as jsonOutput:
         json.dump({
-            "video_framerate": framerate.get(),
+            "framerate": int(framerate.get()),
             "bars": int(bars.get()),
             "bar_spacing": int(bar_spacing.get()),
             "lerp_alpha": float(lerp_alpha.get()),
@@ -96,6 +97,7 @@ def load_preset():
     background.set(preset["background"])
 
 elements = dict()
+# Layout: [(Element, X, Y, Widthspan, Heightspan)]
 layout = [
     (tkinter.Label(root, text="Import/Export:"), 0, 0, 2, 1),
     (tkinter.Label(root, text="Input file (.wav):"), 0, 1, 1, 1), (tkinter.Entry(root, textvariable=wave_name), 1, 1, 1, 1),
@@ -105,95 +107,112 @@ layout = [
     (tkinter.Label(root, text="Video framerate:"), 2, 1, 1, 1), (tkinter.Entry(root, textvariable=framerate, validatecommand=check_num_wrapper), 3, 1, 1, 1),
     (tkinter.Label(root, text="Number of frequency bars to render:"), 2, 2, 1, 1), (tkinter.Entry(root, textvariable=bars, validatecommand=check_num_wrapper), 3, 2, 1, 1),
     (tkinter.Label(root, text="Bar spacing (px):"), 2, 3, 1, 1), (tkinter.Entry(root, textvariable=bar_spacing, validatecommand=check_num_wrapper), 3, 3, 1, 1),
-    (tkinter.Label(root, text="Signal interpolation alpha:"), 2, 4, 1, 1), (tkinter.Entry(root, textvariable=lerp_alpha, validatecommand=check_float_wrapper), 3, 4, 1, 1),
-    (tkinter.Label(root, text="Background image file:"), 2, 5, 1, 1), (tkinter.Entry(root, textvariable=background), 3, 5, 1, 1),
+    (tkinter.Label(root, text="Inbetween interpolation alpha:"), 2, 4, 1, 1), (tkinter.Entry(root, textvariable=lerp_alpha, validatecommand=check_float_wrapper), 3, 4, 1, 1),
+    (tkinter.Label(root, text="Interpolation rate:"), 2, 5, 1, 1), (tkinter.Entry(root, textvariable=lerp_speed, validatecommand=check_float_wrapper), 3, 5, 1, 1),
+    (tkinter.Label(root, text="Background image file:"), 2, 6, 1, 1), (tkinter.Entry(root, textvariable=background), 3, 6, 1, 1),
     
-    (tkinter.Button(root, text="Save Preset", command=save_preset), 0, 6, 1, 1),
-    (tkinter.Button(root, text="Load Preset", command=load_preset), 1, 6, 1, 1),
+    (tkinter.Button(root, text="Save Preset", command=save_preset), 0, 7, 1, 1),
+    (tkinter.Button(root, text="Load Preset", command=load_preset), 1, 7, 1, 1)
 ]
 
 for widget, c, r, cs, rs in layout:
     widget.grid(column=c, row=r, columnspan=cs, rowspan=rs, padx=5, pady=5)
 
-press = tkinter.BooleanVar(value=False)
-continue_button = tkinter.Button(root, text="Continue", command=lambda: press.set(True))
-continue_button.grid(column=3, row=6, columnspan=1, rowspan=1, padx=5, pady=5)
+continue_button = tkinter.Button(root, text="Continue")
+continue_button.grid(column=3, row=7, columnspan=1, rowspan=1, padx=5, pady=5)
+progressBar = tkinter.ttk.Progressbar(root, orient="horizontal", mode="determinate", maximum=1)
+progressBar.grid(column=0, row=8, columnspan=1, rowspan=3, padx=5, pady=5)
 
-root.mainloop()
-continue_button.wait_variable(press)
-root.quit()
+# Main functions
+def render():
+    fps = int(framerate.get())
+    barCount = int(bars.get())
+    barInterval = int(bar_spacing.get())
+    lerp = float(lerp_alpha.get())
+    lerpspeed = float(lerp_speed.get())
+    inputFile = wave_name.get()
 
-wave_name = wave_name.get()
-export_name = export_name.get()
+    wave_object = wave.open("files/" + inputFile)
+        
+    sample_rate = wave_object.getframerate()
+    n_samples = wave_object.getnframes()
+    t_audio = n_samples/sample_rate
 
-video_framerate = int(framerate.get())
-bars = int(bars.get())
-bar_spacing = int(bar_spacing.get())
-lerp_alpha = float(lerp_alpha.get())
-background = background.get()
+    signal_wave = wave_object.readframes(n_samples)
+    signal_array = numpy.frombuffer(signal_wave, dtype=numpy.int16)
 
-wave_object = wave.open("files/" + wave_name.get())
+    l_channel = signal_array[0::2]
+    r_channel = signal_array[1::2]
+    channel_average = abs(numpy.array(l_channel) + numpy.array(r_channel)) / 2
+    spectogram = plt.specgram(channel_average, Fs=sample_rate, vmin=0, vmax=50)
 
-settings = None
+    peak_signal = toSignalScale(numpy.max(channel_average))
+
+    timeMult = sample_rate / fps
+
+    freqMult = len(spectogram[1]) / 1.25 / barCount
+    timeLen = len(spectogram[2])
+    timeMult = timeLen / (n_samples / timeMult)
+
+    frameCount = math.floor(timeLen/timeMult)
+
+    print("File is %0.3f" %t_audio, "seconds long, render length: " + str(frameCount) + " frames.")
+
+    cImage = Image.open('files/' + background.get()).convert("RGB")
+    imageX, imageY = cImage.size
+
+    video = ffmpeg.input('pipe:', format='rawvideo', pix_fmt='rgb24', s='{}x{}'.format(imageX, imageY), r=fps)
+    audio = ffmpeg.input('files/' + inputFile)
+
+    process = (
+        ffmpeg
+        .concat(video, audio, v=1, a=1)
+        .output('export/' + export_name.get(), pix_fmt='yuv420p', vcodec='libx264', r=fps)
+        .overwrite_output()
+        .run_async(pipe_stdin=True)
+    )
+
+    prevSignals = [0] * barCount
+    interrupted = False
+    progressBar.configure(maximum = frameCount - 1)
+    def interrupt():
+        interrupted = True
+    with alive_bar(math.floor(frameCount)) as bar:
+        def draw(frameNo: int):
+            bar()
+            progressBar['value'] = frameNo + 1
+            
+            frame = cImage.copy()  
+            draw = ImageDraw.Draw(frame)
+            # draw.rectangle((0, cImage.size[1] - 10, cImage.size[0], cImage.size[1] - 10), (255, 255, 255))
+
+            for j in range(0, barCount):
+                rawSignal = spectogram[0][round(j * freqMult)][round(frameNo * timeMult)]
+                adjustedLerp = 1 - math.pow(1 - lerp, lerpspeed/fps)
+                signal = toSignalScale(rawSignal) * adjustedLerp + prevSignals[j] * (1 - adjustedLerp)
+                prevSignals[j] = signal
+                size = abs(math.sqrt(signal / peak_signal) * imageY / 2)
+
+                draw.rectangle((imageX / barCount * j + barInterval, imageY - size, imageX / barCount * (j + 1) - barInterval, imageY), fill = (255, 255, 255))
+
+            process.stdin.write(
+                numpy.array(frame).tobytes()
+            )
+            
+        
+        continue_button.configure(text='Cancel', command=interrupt)
+        root.after(1)
+        for i in range(0, math.floor(frameCount)):
+            if interrupted:
+                break
+            draw(i)
+            root.after(1)
+
+    process.stdin.close()
+    process.wait()
     
-sample_rate = wave_object.getframerate()
-n_samples = wave_object.getnframes()
-t_audio = n_samples/sample_rate
+    progressBar['value'] = 0
+    continue_button.configure(text='Continue', command=render)
 
-signal_wave = wave_object.readframes(n_samples)
-signal_array = numpy.frombuffer(signal_wave, dtype=numpy.int16)
-
-l_channel = signal_array[0::2]
-r_channel = signal_array[1::2]
-channel_average = abs(numpy.array(l_channel) + numpy.array(r_channel)) / 2
-spectogram = plt.specgram(channel_average, Fs=sample_rate, vmin=0, vmax=50)
-
-peak_signal = toSignalScale(numpy.max(channel_average))
-
-timeMult = sample_rate/int(video_framerate.get())
-framerate = n_samples / timeMult
-
-freqMult = len(spectogram[1]) / 1.25 / bars
-timeLen = len(spectogram[2])
-timeMult = timeLen/framerate
-
-frameCount = math.floor(timeLen/timeMult)
-
-print("File is %0.3f" %t_audio, "seconds long, render length: " + str(frameCount) + " frames.")
-
-cImage = Image.open("files/" + background).convert("RGB")
-imageX, imageY = cImage.size
-
-video = ffmpeg.input("pipe:", format="rawvideo", pix_fmt="rgb24", s="{}x{}".format(imageX, imageY), r=video_framerate)
-audio = ffmpeg.input("files/" + wave_name)
-
-process = (
-    ffmpeg
-    .concat(video, audio, v=1, a=1)
-    .output(export_name.get(), pix_fmt="yuv420p", vcodec="libx264", r=video_framerate)
-    .overwrite_output()
-    .run_async(pipe_stdin=True)
-)
-
-prevSignals = [0] * bars
-with alive_bar(math.floor(frameCount)) as bar:
-    for i in range(0, math.floor(frameCount)):
-        bar()
-        frame = cImage.copy()  
-        draw = ImageDraw.Draw(frame)
-        draw.rectangle((0, cImage.size[1] - 10, cImage.size[0], cImage.size[1] - 10), (255, 255, 255))
-
-        for j in range(0, bars):
-            rawSignal = spectogram[0][round(j * freqMult)][round(i * timeMult)]
-            signal = toSignalScale(rawSignal) * lerp_alpha + prevSignals[j] * (1 - lerp_alpha)
-            prevSignals[j] = signal
-            size = abs(math.sqrt(signal / peak_signal) * imageY / 2)
-
-            draw.rectangle((imageX / bars * j + bar_spacing, imageY - size, imageX / bars * (j + 1) - bar_spacing, imageY), fill = (255, 255, 255))
-
-        process.stdin.write(
-            numpy.array(frame).tobytes()
-        )
-
-process.stdin.close()
-process.wait()
+continue_button.configure(command=render)
+root.mainloop()
