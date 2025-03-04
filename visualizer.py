@@ -57,7 +57,7 @@ defaultPreset = {
     "coverageY": .5,
     "barJustifyX": .5,
     "barJustifyY": 1,
-    "opacityExp": 0,
+    "brightnessExp": 0,
     "heightExp": .5
 }
 
@@ -83,7 +83,7 @@ coverageX = tkinter.StringVar(value=defaultPreset.get("coverageX"))
 coverageY = tkinter.StringVar(value=defaultPreset.get("coverageY"))
 barJustifyX = tkinter.StringVar(value=defaultPreset.get("barJustifyX"))
 barJustifyY = tkinter.StringVar(value=defaultPreset.get("barJustifyY"))
-opacityExp = tkinter.StringVar(value=defaultPreset.get("opacityExp"))
+brightnessExp = tkinter.StringVar(value=defaultPreset.get("brightnessExp"))
 heightExp = tkinter.StringVar(value=defaultPreset.get("heightExp"))
 
 def toSignalScale(signal):
@@ -118,7 +118,7 @@ def save_preset():
             "coverageY": float(coverageY.get()),
             "barJustifyX": float(barJustifyX.get()),
             "barJustifyY": float(barJustifyY.get()),
-            "opacityExp": float(opacityExp.get()),
+            "brightnessExp": float(brightnessExp.get()),
             "heightExp": float(heightExp.get())
             }, jsonOutput)
 def load_preset():
@@ -141,7 +141,7 @@ def load_preset():
     coverageY.set(preset.get("coverageY", defaultPreset.get("coverageY")))
     barJustifyX.set(preset.get("barJustifyX", defaultPreset.get("barJustifyX")))
     barJustifyY.set(preset.get("barJustifyY", defaultPreset.get("barJustifyY")))
-    opacityExp.set(preset.get("opacityExp", defaultPreset.get("opacityExp")))
+    brightnessExp.set(preset.get("brightnessExp", defaultPreset.get("brightnessExp")))
     heightExp.set(preset.get("heightExp", defaultPreset.get("heightExp")))
 
 elements = dict()
@@ -164,7 +164,7 @@ layout = [
     (tkinter.Label(root, text="Screen coverage height:"), 4, 2, 1, 1), (tkinter.Entry(root, textvariable=coverageY, validate='key', validatecommand=check_float_wrapper), 5, 2, 1, 1),
     (tkinter.Label(root, text="Horizontal justification (left-right):"), 4, 3, 1, 1), (tkinter.Entry(root, textvariable=barJustifyX, validate='key', validatecommand=check_float_wrapper), 5, 3, 1, 1),
     (tkinter.Label(root, text="Vertical justification (top-bottom):"), 4, 4, 1, 1), (tkinter.Entry(root, textvariable=barJustifyY, validate='key', validatecommand=check_float_wrapper), 5, 4, 1, 1),
-    (tkinter.Label(root, text="Opacity exponent:"), 4, 5, 1, 1), (tkinter.Entry(root, textvariable=opacityExp, validate='key', validatecommand=check_float_wrapper), 5, 5, 1, 1),
+    (tkinter.Label(root, text="Brightness exponent:"), 4, 5, 1, 1), (tkinter.Entry(root, textvariable=brightnessExp, validate='key', validatecommand=check_float_wrapper), 5, 5, 1, 1),
     (tkinter.Label(root, text="Height exponent:"), 4, 6, 1, 1), (tkinter.Entry(root, textvariable=heightExp, validate='key', validatecommand=check_float_wrapper), 5, 6, 1, 1),
     
     (tkinter.Button(root, text="Save Preset", command=save_preset), 0, 7, 1, 1),
@@ -197,7 +197,7 @@ def render():
     _coverageY = float(coverageY.get())
     _barJustifyX = float(barJustifyX.get())
     _barJustifyY = float(barJustifyY.get())
-    _opacityExp = float(opacityExp.get())
+    _brightnessExp = float(brightnessExp.get())
     _heightExp = float(heightExp.get())
 
     wave_object = wave.open("files/" + _inputFile)
@@ -268,7 +268,7 @@ def render():
             width = _coverageX / _bars
             height = _coverageY * abs(math.pow(signalFraction, _heightExp))
             heightGap = 1 - height
-            fillOpacity = int(255 * math.pow(signalFraction, _opacityExp))
+            fillBrightness = int(255 * math.pow(signalFraction, _brightnessExp))
             
             draw.rectangle(
                 (
@@ -276,7 +276,7 @@ def render():
                     (heightGap * _barJustifyY) * imageHeight,
                     (widthGap * _barJustifyX + width * (bar + 1)) * imageWidth - math.ceil(_barSpacing / 2),
                     (heightGap * _barJustifyY + height) * imageHeight
-                ), fill = (fillOpacity, fillOpacity, fillOpacity))
+                ), fill = (fillBrightness, fillBrightness, fillBrightness))
 
         process.stdin.write(
             numpy.array(frame).tobytes()

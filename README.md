@@ -38,4 +38,4 @@ Your background image should be 1600x900 or any downscale of it for that sweet 1
 - Tip: Use the "quick" preset to render videos with the settings I use, aka the settings you may have seen on some of my showcases
   - (almost) equivalent to the preloaded settings
 
-The bar fill color will be white, if you aren't satisfied with that edit the script yourself.
+The bar fill color will be white and varies based off its relative height and the settings in use.
