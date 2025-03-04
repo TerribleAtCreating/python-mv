@@ -10,10 +10,8 @@ You can install it at https://www.ffmpeg.org/. Install it by adding it to your P
 - [NumPy](https://numpy.org/)
 - [Pillow](https://python-pillow.org/)
 - [matplotlib](https://matplotlib.org/)
-- [alive-progress](https://github.com/rsalmei/alive-progress)
 
-If you haven't installed these already, an automatic (currently untested) module installer is included in the script.
-I would recommend installing them manually though.
+If you haven't installed these already, the script will exit before anything major is executed.
 
 ## Usage
 ### What do I use this for?
