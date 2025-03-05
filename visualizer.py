@@ -46,7 +46,7 @@ ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('terriac.pythonmv'
 root.iconbitmap("pymv.ico", "pymv.ico")
 
 inputFile = tkinter.StringVar()
-exportName = tkinter.StringVar()
+exportFile = tkinter.StringVar()
 channelPan = tkinter.StringVar()
 
 defaultPreset = {
@@ -105,6 +105,10 @@ def check_float(newval):
     return re.match('^[+-]?(?:[0-9]*[.])?[0-9]*$', newval) is not None and len(newval) <= 5
 check_float_wrapper = (root.register(check_float), '%P')
 
+def assert_empty(text, context):
+    if len(text) <= 0:
+        raise ValueError(context + " is empty")
+
 # Dialog buttons
 def save_preset():
     presetPath = tkinter.filedialog.asksaveasfilename(filetypes=[('JSON Preset', '*.json')], initialdir=directory+'/presets')
@@ -158,7 +162,7 @@ elements = dict()
 layout = [
     (tkinter.Label(root, text="Import/Export:"), 0, 0, 2, 1),
     (tkinter.Label(root, text="Input file (.wav):"), 0, 1, 1, 1), (tkinter.Entry(root, textvariable=inputFile), 1, 1, 1, 1),
-    (tkinter.Label(root, text="Export filename:"), 0, 2, 1, 1), (tkinter.Entry(root, textvariable=exportName), 1, 2, 1, 1),
+    (tkinter.Label(root, text="Export filename:"), 0, 2, 1, 1), (tkinter.Entry(root, textvariable=exportFile), 1, 2, 1, 1),
     (tkinter.Label(root, text="Channel panning:"), 0, 3, 1, 1), (tkinter.Entry(root, textvariable=channelPan, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
     
     (tkinter.Label(root, text="Render settings:"), 2, 0, 2, 1),
@@ -200,23 +204,33 @@ def render():
     interrupted = False
     def interrupt():
         nonlocal interrupted; interrupted = "Render was cancelled."
+    try:
+        _inputFile = inputFile.get()
+        _exportFile = exportFile.get()
+        _channelPan = float(channelPan.get())
+            
+        _framerate = int(framerate.get())
+        _bars = int(bars.get())
+        _barSpacing = int(barSpacing.get())
+        _lerpAlpha = float(lerpAlpha.get())
+        _lerpSpeed = float(lerpSpeed.get())
+        _background = background.get()
         
-    _inputFile = inputFile.get()
-    _exportName = exportName.get()
-    _channelPan = float(channelPan.get())
+        _coverageX = float(coverageX.get())
+        _coverageY = float(coverageY.get())
+        _barJustifyX = float(barJustifyX.get())
+        _barJustifyY = float(barJustifyY.get())
+        _brightnessExp = float(brightnessExp.get())
+        _heightExp = float(heightExp.get())
         
-    _framerate = int(framerate.get())
-    _bars = int(bars.get())
-    _barSpacing = int(barSpacing.get())
-    _lerpAlpha = float(lerpAlpha.get())
-    _lerpSpeed = float(lerpSpeed.get())
-    
-    _coverageX = float(coverageX.get())
-    _coverageY = float(coverageY.get())
-    _barJustifyX = float(barJustifyX.get())
-    _barJustifyY = float(barJustifyY.get())
-    _brightnessExp = float(brightnessExp.get())
-    _heightExp = float(heightExp.get())
+        assert_empty(_inputFile, "Input filename")
+        assert_empty(_exportFile, "Export filename")
+        assert_empty(_background, "Background filename")
+    except ValueError as error:
+        interrupted = "Some provided render settings are invalid. Please double check that all render settings are filled.\nIf all settings were filled, please report this as an issue."
+        tkinter.messagebox.showerror("Render settings invalidated", interrupted)
+        print("Render settings invalidated:", error)
+        return
 
     waveObject = wave.open("files/" + _inputFile)
         
@@ -244,7 +258,7 @@ def render():
 
     print("File is %0.3f" %tAudio, "seconds long, render length: " + str(frameCount) + " frames.")
 
-    cImage = Image.open('files/' + background.get()).convert("RGB")
+    cImage = Image.open('files/' + _background).convert("RGB")
     imageWidth, imageHeight = cImage.size
 
     video = ffmpeg.input('pipe:', format='rawvideo', pix_fmt='rgb24', s='{}x{}'.format(imageWidth, imageHeight), r=_framerate)
@@ -253,7 +267,7 @@ def render():
     process = (
         ffmpeg
         .concat(video, audio, v=1, a=1)
-        .output('export/' + _exportName, pix_fmt='yuv420p', vcodec='libx264', r=_framerate)
+        .output('export/' + _exportFile, pix_fmt='yuv420p', vcodec='libx264', r=_framerate)
         .overwrite_output()
         .run_async(pipe_stdin=True)
     )
