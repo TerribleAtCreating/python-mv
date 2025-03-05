@@ -218,23 +218,23 @@ def render():
     _brightnessExp = float(brightnessExp.get())
     _heightExp = float(heightExp.get())
 
-    wave_object = wave.open("files/" + _inputFile)
+    waveObject = wave.open("files/" + _inputFile)
         
-    sample_rate = wave_object.getframerate()
-    nSamples = wave_object.getnframes()
-    tAudio = nSamples/sample_rate
+    sampleRate = waveObject.getframerate()
+    nSamples = waveObject.getnframes()
+    tAudio = nSamples/sampleRate
 
-    signalWave = wave_object.readframes(nSamples)
+    signalWave = waveObject.readframes(nSamples)
     signalArray = numpy.frombuffer(signalWave, dtype=numpy.int16)
 
     lChannel = signalArray[0::2]
     rChannel = signalArray[1::2]
     channelAverage = abs(numpy.array(lChannel) * _channelPan + numpy.array(rChannel) * (1 - _channelPan))
-    spectogram = plt.specgram(channelAverage, Fs=sample_rate, vmin=0, vmax=50)
+    spectogram = plt.specgram(channelAverage, Fs=sampleRate, vmin=0, vmax=50)
 
-    peak_signal = toSignalScale(numpy.max(channelAverage))
+    peakSignal = toSignalScale(numpy.max(channelAverage))
 
-    frameInterval = sample_rate / _framerate
+    frameInterval = sampleRate / _framerate
 
     freqMult = len(spectogram[1]) / 1.25 / _bars
     timeLen = len(spectogram[2])
@@ -280,7 +280,7 @@ def render():
             adjustedLerp = 1 - math.pow(1 - _lerpAlpha, _lerpSpeed/_framerate)
             signal = toSignalScale(rawSignal) * adjustedLerp + prevSignals[bar] * (1 - adjustedLerp)
             prevSignals[bar] = signal
-            signalFraction = signal / peak_signal
+            signalFraction = signal / peakSignal
             
             width = _coverageX / _bars
             height = _coverageY * abs(math.pow(signalFraction, _heightExp))
