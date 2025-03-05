@@ -227,7 +227,7 @@ def render():
         assert_empty(_exportFile, "Export filename")
         assert_empty(_background, "Background filename")
     except ValueError as error:
-        interrupted = "Some provided render settings are invalid. Please double check that all render settings are filled.\nIf all settings were filled, please report this as an issue."
+        interrupted = "Some provided render settings are invalid. Please double check that all render settings are filled, and check the output for details.\nIf all settings were filled, please report this as an issue."
         tkinter.messagebox.showerror("Render settings invalidated", interrupted)
         print("Render settings invalidated:", error)
         return
