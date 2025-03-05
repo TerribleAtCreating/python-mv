@@ -266,7 +266,6 @@ def render():
     widthGap = 1 - _coverageX
     def drawF(frameNo: int):
         if interrupted or frameNo >= frameCount:
-            complete.set()
             return False
         
         elapsed = timeit.default_timer() - renderStart
@@ -305,6 +304,8 @@ def render():
         try:
             if drawF(frameNo):
                 root.after(1, lambda: drawWrapper(frameNo + 1))
+            else:
+                complete.set()
         except Exception as error:
             nonlocal interrupted; interrupted = "A problem occured, please check the output for errors."
             tkinter.messagebox.showerror("Render interrupted", interrupted)
