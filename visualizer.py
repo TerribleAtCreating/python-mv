@@ -10,7 +10,8 @@ except ImportError:
     
 import math
 import json
-import tkinter; import tkinter.filedialog; import tkinter.ttk
+import tkinter; import tkinter.filedialog; import tkinter.messagebox
+import tkinter.ttk
 import wave
 import re
 import os
@@ -45,9 +46,11 @@ ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('terriac.pythonmv'
 root.iconbitmap("pymv.ico", "pymv.ico")
 
 inputFile = tkinter.StringVar()
-export_name = tkinter.StringVar()
+exportName = tkinter.StringVar()
+channelPan = tkinter.StringVar()
 
 defaultPreset = {
+    "channelPan": .5,
     "framerate": 30,
     "bars": 25,
     "barSpacing": 5,
@@ -71,6 +74,8 @@ justifyVertical = [
 "Center",
 "Bottom"
 ]
+
+channelPan = tkinter.StringVar(value=defaultPreset.get("channelPan"))
 
 framerate = tkinter.StringVar(value=defaultPreset.get("framerate"))
 bars = tkinter.StringVar(value=defaultPreset.get("bars"))
@@ -107,6 +112,8 @@ def save_preset():
     
     with open(presetPath, 'w') as jsonOutput:
         json.dump({
+            "channelPan": float(channelPan.get()),
+            
             "framerate": int(framerate.get()),
             "bars": int(bars.get()),
             "barSpacing": int(barSpacing.get()),
@@ -130,6 +137,8 @@ def load_preset():
         return
     preset: dict = json.load(open(presetPath))
     
+    channelPan.set(preset.get("channelPan", defaultPreset.get("channelPan")))
+    
     framerate.set(preset.get("framerate", defaultPreset.get("framerate")))
     bars.set(preset.get("bars", defaultPreset.get("bars")))
     barSpacing.set(preset.get("barSpacing", defaultPreset.get("barSpacing")))
@@ -149,7 +158,8 @@ elements = dict()
 layout = [
     (tkinter.Label(root, text="Import/Export:"), 0, 0, 2, 1),
     (tkinter.Label(root, text="Input file (.wav):"), 0, 1, 1, 1), (tkinter.Entry(root, textvariable=inputFile), 1, 1, 1, 1),
-    (tkinter.Label(root, text="Export filename:"), 0, 2, 1, 1), (tkinter.Entry(root, textvariable=export_name), 1, 2, 1, 1),
+    (tkinter.Label(root, text="Export filename:"), 0, 2, 1, 1), (tkinter.Entry(root, textvariable=exportName), 1, 2, 1, 1),
+    (tkinter.Label(root, text="Channel panning:"), 0, 3, 1, 1), (tkinter.Entry(root, textvariable=channelPan, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
     
     (tkinter.Label(root, text="Render settings:"), 2, 0, 2, 1),
     (tkinter.Label(root, text="Video framerate:"), 2, 1, 1, 1), (tkinter.Entry(root, textvariable=framerate, validate='key', validatecommand=check_num_wrapper), 3, 1, 1, 1),
@@ -172,12 +182,16 @@ layout = [
 ]
 
 for widget, c, r, cs, rs in layout:
-    widget.grid(column=c, row=r, columnspan=cs, rowspan=rs, padx=5, pady=5)
+    sticky = None
+    if isinstance(widget, tkinter.Label) and r > 0:
+        sticky = 'e'
+    widget.grid(column=c, row=r, columnspan=cs, rowspan=rs, padx=5, pady=5, sticky=sticky)
+
+continueButton = tkinter.Button(root, text="Render")
+continueButton.grid(column=2, row=7, columnspan=1, rowspan=1, padx=5, pady=5)
 
 progressLabel = tkinter.Label(root, text="Ready")
 progressLabel.grid(column=1, row=8, columnspan=3, rowspan=3, padx=5, pady=5, sticky='w')
-continueButton = tkinter.Button(root, text="Render")
-continueButton.grid(column=2, row=7, columnspan=1, rowspan=1, padx=5, pady=5)
 progressBar = tkinter.ttk.Progressbar(root, orient="horizontal", mode="determinate", maximum=1)
 progressBar.grid(column=0, row=8, columnspan=1, rowspan=3, padx=5, pady=5)
 
@@ -186,12 +200,16 @@ def render():
     interrupted = False
     def interrupt():
         nonlocal interrupted; interrupted = "Render was cancelled."
+        
+    _inputFile = inputFile.get()
+    _exportName = exportName.get()
+    _channelPan = float(channelPan.get())
+        
     _framerate = int(framerate.get())
     _bars = int(bars.get())
     _barSpacing = int(barSpacing.get())
     _lerpAlpha = float(lerpAlpha.get())
     _lerpSpeed = float(lerpSpeed.get())
-    _inputFile = inputFile.get()
     
     _coverageX = float(coverageX.get())
     _coverageY = float(coverageY.get())
@@ -211,7 +229,7 @@ def render():
 
     lChannel = signalArray[0::2]
     rChannel = signalArray[1::2]
-    channelAverage = abs(numpy.array(lChannel) + numpy.array(rChannel)) / 2
+    channelAverage = abs(numpy.array(lChannel) * _channelPan + numpy.array(rChannel) * (1 - _channelPan))
     spectogram = plt.specgram(channelAverage, Fs=sample_rate, vmin=0, vmax=50)
 
     peak_signal = toSignalScale(numpy.max(channelAverage))
@@ -235,7 +253,7 @@ def render():
     process = (
         ffmpeg
         .concat(video, audio, v=1, a=1)
-        .output('export/' + export_name.get(), pix_fmt='yuv420p', vcodec='libx264', r=_framerate)
+        .output('export/' + _exportName, pix_fmt='yuv420p', vcodec='libx264', r=_framerate)
         .overwrite_output()
         .run_async(pipe_stdin=True)
     )
@@ -249,7 +267,7 @@ def render():
     def drawF(frameNo: int):
         if interrupted or frameNo >= frameCount:
             complete.set()
-            return
+            return False
         
         elapsed = timeit.default_timer() - renderStart
         progressLabel.configure(text=f"Rendering... {elapsed:.1f}s elapsed - {frameNo}/{frameCount} - {frameNo/elapsed:.1f}/s - {frameNo/elapsed/_framerate:.3f}x render speed")
@@ -281,15 +299,16 @@ def render():
         process.stdin.write(
             numpy.array(frame).tobytes()
         )
+        
+        return True
     def drawWrapper(frameNo: int = 0):
         try:
-            drawF(frameNo)
-            root.after(1, lambda: drawWrapper(frameNo + 1))
+            if drawF(frameNo):
+                root.after(1, lambda: drawWrapper(frameNo + 1))
         except Exception as error:
-            nonlocal interrupted; interrupted = "A problem occured, please check output."
+            nonlocal interrupted; interrupted = "A problem occured, please check the output for errors."
+            tkinter.messagebox.showerror("Render interrupted", interrupted)
             print("Exception was caught:", error)
-        
-        
     
     continueButton.configure(text='Cancel', command=interrupt)
     
