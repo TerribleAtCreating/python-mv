@@ -1,1 +1,1 @@
-{"framerate": 30, "bars": 25, "barSpacing": 5, "lerpAlpha": 0.75, "lerpSpeed": 25.0, "background": "greenscreen.png", "coverageX": 1.0, "coverageY": 0.5, "barJustifyX": 0.5, "barJustifyY": 1.0, "brightnessExp": 0.0, "heightExp": 0.5}
+{"framerate": 30, "bars": 25, "barspacing": 5, "lerpalpha": 0.75, "lerpspeed": 25.0, "background": "greenscreen.png", "coverageX": 1.0, "coverageY": 0.5, "barjustifyX": 0.5, "barjustifyY": 1.0, "brightnessexp": 0.0, "heightexp": 0.5}

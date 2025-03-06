@@ -4,7 +4,8 @@ try:
     import matplotlib.pyplot as plt
     from PIL import Image
     from PIL import ImageDraw
-except ImportError:
+except ImportError as error:
+    print("Failed to import modules:", error)
     print("Import error! Please install any missing libraries, then restart the script.")
     quit()
     
@@ -23,15 +24,15 @@ import timeit
 yknow, when i was reading up on pysimplegui i didn't expect to have to pay 100 dollars
 
 layout = [ 
-    QLineEdit("Session export settings:")],
-    QLineEdit("WAV file: ", key="audiofile"), gui.InputText(key="audiofile")],
-    QLineEdit("Render filename: ", key="renderfile"), gui.InputText(key="renderfile")],
-    QLineEdit("Render settings:")],
-    QLineEdit("Video framerate:", key="framerate"), gui.InputText(key="framerate")],
-    QLineEdit("Number of frequency bars to render:", key="bars"), gui.InputText(key="bars")],
-    QLineEdit("Bar spacing (in pixels):", key="spacing"), gui.Input(key="spacing")],
-    QLineEdit("Signal interpolation alpha:", key="_lerpAlpha"), gui.InputText(key="_lerpAlpha")],
-    QLineEdit("Background image file:", key="background"), gui.InputText(key="background")],
+    QLineedit("Session export settings:")],
+    QLineedit("WAV file: ", key="audiofile"), gui.Inputtext(key="audiofile")],
+    QLineedit("Render filename: ", key="renderfile"), gui.Inputtext(key="renderfile")],
+    QLineedit("Render settings:")],
+    QLineedit("Video framerate:", key="framerate"), gui.Inputtext(key="framerate")],
+    QLineedit("Number of frequency bars to render:", key="bars"), gui.Inputtext(key="bars")],
+    QLineedit("Bar spacing (in pixels):", key="spacing"), gui.Input(key="spacing")],
+    QLineedit("Signal interpolation alpha:", key="_lerpalpha"), gui.Inputtext(key="_lerpalpha")],
+    QLineedit("Background image file:", key="background"), gui.Inputtext(key="background")],
     
     [gui.Button("Save Preset"), gui.Button("Load Preset")],
     [gui.Button("Continue")]
@@ -45,53 +46,53 @@ root.title("Python-MV")
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('terriac.pythonmv')
 root.iconbitmap("pymv.ico", "pymv.ico")
 
-inputFile = tkinter.StringVar()
-exportFile = tkinter.StringVar()
-channelPan = tkinter.StringVar()
+input_file = tkinter.StringVar()
+export_file = tkinter.StringVar()
+channel_pan = tkinter.StringVar()
 
-defaultPreset = {
-    "channelPan": .5,
+defaultpreset = {
+    "channel_pan": .5,
     "framerate": 30,
     "bars": 25,
-    "barSpacing": 5,
-    "lerpAlpha": .75,
-    "lerpSpeed": 25,
-    "coverageX": 1,
-    "coverageY": .5,
-    "barJustifyX": .5,
-    "barJustifyY": 1,
-    "brightnessExp": 0,
-    "heightExp": .5
+    "bar_spacing": 5,
+    "lerp_alpha": .75,
+    "lerp_speed": 25,
+    "coverage_x": 1,
+    "coverage_y": .5,
+    "bar_justify_x": .5,
+    "bar_justify_y": 1,
+    "brightness_exp": 0,
+    "height_exp": .5
 }
 
-justifyHorizontal = [
+justify_horizontal = [
 "Left",
 "Center",
 "Right"
 ]
-justifyVertical = [
+justify_vertical = [
 "Top",
 "Center",
 "Bottom"
 ]
 
-channelPan = tkinter.StringVar(value=defaultPreset.get("channelPan"))
+channel_pan = tkinter.StringVar(value=defaultpreset.get("channel_pan"))
 
-framerate = tkinter.StringVar(value=defaultPreset.get("framerate"))
-bars = tkinter.StringVar(value=defaultPreset.get("bars"))
-barSpacing = tkinter.StringVar(value=defaultPreset.get("barSpacing"))
-lerpAlpha = tkinter.StringVar(value=defaultPreset.get("lerpAlpha"))
-lerpSpeed = tkinter.StringVar(value=defaultPreset.get("lerpSpeed"))
-background = tkinter.StringVar(value=defaultPreset.get("background"))
+framerate = tkinter.StringVar(value=defaultpreset.get("framerate"))
+bars = tkinter.StringVar(value=defaultpreset.get("bars"))
+bar_spacing = tkinter.StringVar(value=defaultpreset.get("bar_spacing"))
+lerp_alpha = tkinter.StringVar(value=defaultpreset.get("lerp_alpha"))
+lerp_speed = tkinter.StringVar(value=defaultpreset.get("lerp_speed"))
+background = tkinter.StringVar(value=defaultpreset.get("background"))
 
-coverageX = tkinter.StringVar(value=defaultPreset.get("coverageX"))
-coverageY = tkinter.StringVar(value=defaultPreset.get("coverageY"))
-barJustifyX = tkinter.StringVar(value=defaultPreset.get("barJustifyX"))
-barJustifyY = tkinter.StringVar(value=defaultPreset.get("barJustifyY"))
-brightnessExp = tkinter.StringVar(value=defaultPreset.get("brightnessExp"))
-heightExp = tkinter.StringVar(value=defaultPreset.get("heightExp"))
+coverage_x = tkinter.StringVar(value=defaultpreset.get("coverage_x"))
+coverage_y = tkinter.StringVar(value=defaultpreset.get("coverage_y"))
+bar_justify_x = tkinter.StringVar(value=defaultpreset.get("bar_justify_x"))
+bar_justify_y = tkinter.StringVar(value=defaultpreset.get("bar_justify_y"))
+brightness_exp = tkinter.StringVar(value=defaultpreset.get("brightness_exp"))
+height_exp = tkinter.StringVar(value=defaultpreset.get("height_exp"))
 
-def toSignalScale(signal):
+def to_signal_scale(signal):
     if signal < 1:
         signal = 1
     return 20 * math.log10(signal)
@@ -106,80 +107,108 @@ def check_float(newval):
 check_float_wrapper = (root.register(check_float), '%P')
 
 def assert_empty(text, context):
-    if len(text) <= 0:
-        raise ValueError(context + " is empty")
+    if len(text) <= 0: raise ValueError(context + " is empty")
+    
+def format_path(path: str = directory, initialdir: str = ''):
+    return os.path.relpath(path, directory + initialdir).replace("\\","/")
+    
+def save_filename(filetypes, initialdir, formatInitial = False):
+    filename = tkinter.filedialog.asksaveasfilename(filetypes=filetypes, initialdir=directory+initialdir)
+    if not filename: return ''
+    return format_path(filename, initialdir if formatInitial else '')
+
+def open_filename(filetypes, initialdir, formatInitial = False):
+    filename = tkinter.filedialog.askopenfilename(filetypes=filetypes, initialdir=directory+initialdir)
+    if not filename: return ''
+    return format_path(filename, initialdir if formatInitial else '')
 
 # Dialog buttons
 def save_preset():
-    presetPath = tkinter.filedialog.asksaveasfilename(filetypes=[('JSON Preset', '*.json')], initialdir=directory+'/presets')
-    presetPath = os.path.relpath(presetPath).replace("\\","/")
-    
-    with open(presetPath, 'w') as jsonOutput:
+    presetpath = save_filename([('JSON Preset', '*.json')], '/presets')
+    if not presetpath: return
+    with open(presetpath, 'w') as jsonoutput:
         json.dump({
-            "channelPan": float(channelPan.get()),
+            "channelpan": float(channel_pan.get()),
             
             "framerate": int(framerate.get()),
             "bars": int(bars.get()),
-            "barSpacing": int(barSpacing.get()),
-            "lerpAlpha": float(lerpAlpha.get()),
-            "lerpSpeed": float(lerpSpeed.get()),
+            "bar_spacing": int(bar_spacing.get()),
+            "lerp_alpha": float(lerp_alpha.get()),
+            "lerp_speed": float(lerp_speed.get()),
             "background": background.get(),
             
-            "coverageX": float(coverageX.get()),
-            "coverageY": float(coverageY.get()),
-            "barJustifyX": float(barJustifyX.get()),
-            "barJustifyY": float(barJustifyY.get()),
-            "brightnessExp": float(brightnessExp.get()),
-            "heightExp": float(heightExp.get())
-            }, jsonOutput)
+            "coverage_x": float(coverage_x.get()),
+            "coverage_y": float(coverage_y.get()),
+            "bar_justify_x": float(bar_justify_x.get()),
+            "bar_justify_y": float(bar_justify_y.get()),
+            "brightness_exp": float(brightness_exp.get()),
+            "height_exp": float(height_exp.get())
+            }, jsonoutput)
 def load_preset():
-    presetPath = tkinter.filedialog.askopenfilename(filetypes=[('JSON Preset', '*.json')], initialdir=directory+'/presets')
-    presetPath = os.path.relpath(presetPath).replace("\\","/")
-    
-    if not os.path.isfile(presetPath):
+    presetpath = open_filename([('JSON Preset', '*.json')], '/presets')
+    if not presetpath: return
+    if not os.path.isfile(presetpath):
         tkinter.messagebox.showwarning("File not found", "Selected file does not exist.")
         return
-    preset: dict = json.load(open(presetPath))
+    preset: dict = json.load(open(presetpath))
     
-    channelPan.set(preset.get("channelPan", defaultPreset.get("channelPan")))
+    channel_pan.set(preset.get("channel_pan", defaultpreset.get("channel_pan")))
     
-    framerate.set(preset.get("framerate", defaultPreset.get("framerate")))
-    bars.set(preset.get("bars", defaultPreset.get("bars")))
-    barSpacing.set(preset.get("barSpacing", defaultPreset.get("barSpacing")))
-    lerpAlpha.set(preset.get("lerpAlpha", defaultPreset.get("lerpAlpha")))
-    lerpSpeed.set(preset.get("lerpSpeed", defaultPreset.get("lerpSpeed")))
-    background.set(preset.get("background", defaultPreset.get("background")))
+    framerate.set(preset.get("framerate", defaultpreset.get("framerate")))
+    bars.set(preset.get("bars", defaultpreset.get("bars")))
+    bar_spacing.set(preset.get("bar_spacing", defaultpreset.get("bar_spacing")))
+    lerp_alpha.set(preset.get("lerp_alpha", defaultpreset.get("lerp_alpha")))
+    lerp_speed.set(preset.get("lerp_speed", defaultpreset.get("lerp_speed")))
+    background.set(preset.get("background", defaultpreset.get("background")))
     
-    coverageX.set(preset.get("coverageX", defaultPreset.get("coverageX")))
-    coverageY.set(preset.get("coverageY", defaultPreset.get("coverageY")))
-    barJustifyX.set(preset.get("barJustifyX", defaultPreset.get("barJustifyX")))
-    barJustifyY.set(preset.get("barJustifyY", defaultPreset.get("barJustifyY")))
-    brightnessExp.set(preset.get("brightnessExp", defaultPreset.get("brightnessExp")))
-    heightExp.set(preset.get("heightExp", defaultPreset.get("heightExp")))
+    coverage_x.set(preset.get("coverage_x", defaultpreset.get("coverage_x")))
+    coverage_y.set(preset.get("coverage_y", defaultpreset.get("coverage_y")))
+    bar_justify_x.set(preset.get("bar_justify_x", defaultpreset.get("bar_justify_x")))
+    bar_justify_y.set(preset.get("bar_justify_y", defaultpreset.get("bar_justify_y")))
+    brightness_exp.set(preset.get("brightness_exp", defaultpreset.get("brightness_exp")))
+    height_exp.set(preset.get("height_exp", defaultpreset.get("height_exp")))
+
+def multiple_function(*args):
+    for func in args: func()
+
+class OpenFileMenu(tkinter.Button):
+    def __init__(self, *args, filetypes, initialdir, targetvariable: tkinter.StringVar, **kwargs):
+        super().__init__(*args, command=lambda:
+            multiple_function(
+                lambda: targetvariable.set(open_filename(filetypes, initialdir, True)),
+                lambda: self.configure(text=targetvariable.get() != '' and targetvariable.get() or "No file selected")
+            ), **kwargs)
+        
+class SaveFileMenu(tkinter.Button):
+    def __init__(self, *args, filetypes, initialdir, targetvariable: tkinter.StringVar, **kwargs):
+        super().__init__(*args, command=lambda: multiple_function(
+                lambda: targetvariable.set(save_filename(filetypes, initialdir, True)),
+                lambda: self.configure(text=targetvariable.get() != '' and targetvariable.get() or "No file selected")
+            ), **kwargs)
 
 elements = dict()
 # Layout: [(Element, X, Y, Widthspan, Heightspan)]
 layout = [
     (tkinter.Label(root, text="Import/Export:"), 0, 0, 2, 1),
-    (tkinter.Label(root, text="Input file (.wav):"), 0, 1, 1, 1), (tkinter.Entry(root, textvariable=inputFile), 1, 1, 1, 1),
-    (tkinter.Label(root, text="Export filename:"), 0, 2, 1, 1), (tkinter.Entry(root, textvariable=exportFile), 1, 2, 1, 1),
-    (tkinter.Label(root, text="Channel panning:"), 0, 3, 1, 1), (tkinter.Entry(root, textvariable=channelPan, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
+    (tkinter.Label(root, text="Input file (.wav):"), 0, 1, 1, 1), (OpenFileMenu(root, text="Select audio...", targetvariable=input_file, filetypes=[('Wave audio file', '*.wav')], initialdir='/files'), 1, 1, 1, 1),
+    (tkinter.Label(root, text="Export filename:"), 0, 2, 1, 1), (SaveFileMenu(root, text="Select filename...", targetvariable=export_file, filetypes=[('MPEG-4 video file', '*.mp4')], initialdir='/export'), 1, 2, 1, 1),
+    (tkinter.Label(root, text="Channel panning:"), 0, 3, 1, 1), (tkinter.Entry(root, textvariable=channel_pan, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
     
     (tkinter.Label(root, text="Render settings:"), 2, 0, 2, 1),
     (tkinter.Label(root, text="Video framerate:"), 2, 1, 1, 1), (tkinter.Entry(root, textvariable=framerate, validate='key', validatecommand=check_num_wrapper), 3, 1, 1, 1),
     (tkinter.Label(root, text="Number of frequency bars to render:"), 2, 2, 1, 1), (tkinter.Entry(root, textvariable=bars, validate='key', validatecommand=check_num_wrapper), 3, 2, 1, 1),
-    (tkinter.Label(root, text="Bar spacing (px):"), 2, 3, 1, 1), (tkinter.Entry(root, textvariable=barSpacing, validate='key', validatecommand=check_num_wrapper), 3, 3, 1, 1),
-    (tkinter.Label(root, text="Inbetween interpolation alpha:"), 2, 4, 1, 1), (tkinter.Entry(root, textvariable=lerpAlpha, validate='key', validatecommand=check_float_wrapper), 3, 4, 1, 1),
-    (tkinter.Label(root, text="Interpolation rate:"), 2, 5, 1, 1), (tkinter.Entry(root, textvariable=lerpSpeed, validate='key', validatecommand=check_float_wrapper), 3, 5, 1, 1),
-    (tkinter.Label(root, text="Background image file:"), 2, 6, 1, 1), (tkinter.Entry(root, textvariable=background), 3, 6, 1, 1),
+    (tkinter.Label(root, text="Bar spacing (px):"), 2, 3, 1, 1), (tkinter.Entry(root, textvariable=bar_spacing, validate='key', validatecommand=check_num_wrapper), 3, 3, 1, 1),
+    (tkinter.Label(root, text="Inbetween interpolation alpha:"), 2, 4, 1, 1), (tkinter.Entry(root, textvariable=lerp_alpha, validate='key', validatecommand=check_float_wrapper), 3, 4, 1, 1),
+    (tkinter.Label(root, text="Interpolation rate:"), 2, 5, 1, 1), (tkinter.Entry(root, textvariable=lerp_speed, validate='key', validatecommand=check_float_wrapper), 3, 5, 1, 1),
+    (tkinter.Label(root, text="Background image file:"), 2, 6, 1, 1), (OpenFileMenu(root, text="Select background...", targetvariable=background, filetypes=[('PNG image file', '*.png')], initialdir='/files'), 3, 6, 1, 1),
     
     (tkinter.Label(root, text="Bar customization:"), 4, 0, 2, 1),
-    (tkinter.Label(root, text="Screen coverage width:"), 4, 1, 1, 1), (tkinter.Entry(root, textvariable=coverageX, validate='key', validatecommand=check_float_wrapper), 5, 1, 1, 1),
-    (tkinter.Label(root, text="Screen coverage height:"), 4, 2, 1, 1), (tkinter.Entry(root, textvariable=coverageY, validate='key', validatecommand=check_float_wrapper), 5, 2, 1, 1),
-    (tkinter.Label(root, text="Horizontal justification (left-right):"), 4, 3, 1, 1), (tkinter.Entry(root, textvariable=barJustifyX, validate='key', validatecommand=check_float_wrapper), 5, 3, 1, 1),
-    (tkinter.Label(root, text="Vertical justification (top-bottom):"), 4, 4, 1, 1), (tkinter.Entry(root, textvariable=barJustifyY, validate='key', validatecommand=check_float_wrapper), 5, 4, 1, 1),
-    (tkinter.Label(root, text="Brightness exponent:"), 4, 5, 1, 1), (tkinter.Entry(root, textvariable=brightnessExp, validate='key', validatecommand=check_float_wrapper), 5, 5, 1, 1),
-    (tkinter.Label(root, text="Height exponent:"), 4, 6, 1, 1), (tkinter.Entry(root, textvariable=heightExp, validate='key', validatecommand=check_float_wrapper), 5, 6, 1, 1),
+    (tkinter.Label(root, text="Screen coverage width:"), 4, 1, 1, 1), (tkinter.Entry(root, textvariable=coverage_x, validate='key', validatecommand=check_float_wrapper), 5, 1, 1, 1),
+    (tkinter.Label(root, text="Screen coverage height:"), 4, 2, 1, 1), (tkinter.Entry(root, textvariable=coverage_y, validate='key', validatecommand=check_float_wrapper), 5, 2, 1, 1),
+    (tkinter.Label(root, text="Horizontal justification (left-right):"), 4, 3, 1, 1), (tkinter.Entry(root, textvariable=bar_justify_x, validate='key', validatecommand=check_float_wrapper), 5, 3, 1, 1),
+    (tkinter.Label(root, text="Vertical justification (top-bottom):"), 4, 4, 1, 1), (tkinter.Entry(root, textvariable=bar_justify_y, validate='key', validatecommand=check_float_wrapper), 5, 4, 1, 1),
+    (tkinter.Label(root, text="Brightness exponent:"), 4, 5, 1, 1), (tkinter.Entry(root, textvariable=brightness_exp, validate='key', validatecommand=check_float_wrapper), 5, 5, 1, 1),
+    (tkinter.Label(root, text="Height exponent:"), 4, 6, 1, 1), (tkinter.Entry(root, textvariable=height_exp, validate='key', validatecommand=check_float_wrapper), 5, 6, 1, 1),
     
     (tkinter.Button(root, text="Save Preset", command=save_preset), 0, 7, 1, 1),
     (tkinter.Button(root, text="Load Preset", command=load_preset), 1, 7, 1, 1)
@@ -189,15 +218,17 @@ for widget, c, r, cs, rs in layout:
     sticky = None
     if isinstance(widget, tkinter.Label) and r > 0:
         sticky = 'e'
-    widget.grid(column=c, row=r, columnspan=cs, rowspan=rs, padx=5, pady=5, sticky=sticky)
+    if isinstance(widget, tkinter.Button) and r < 7:
+        sticky = 'ew'
+    widget.grid(sticky=sticky, column=c, row=r, columnspan=cs, rowspan=rs, padx=5, pady=5)
 
-continueButton = tkinter.Button(root, text="Render")
-continueButton.grid(column=2, row=7, columnspan=1, rowspan=1, padx=5, pady=5)
+continuebutton = tkinter.Button(root, text="Render")
+continuebutton.grid(column=2, row=7, columnspan=1, rowspan=1, padx=5, pady=5)
 
-progressLabel = tkinter.Label(root, text="Ready")
-progressLabel.grid(column=1, row=8, columnspan=3, rowspan=3, padx=5, pady=5, sticky='w')
-progressBar = tkinter.ttk.Progressbar(root, orient="horizontal", mode="determinate", maximum=1)
-progressBar.grid(column=0, row=8, columnspan=1, rowspan=3, padx=5, pady=5)
+progressbar = tkinter.ttk.Progressbar(root, orient="horizontal", mode="determinate", maximum=1)
+progressbar.grid(sticky='ew', column=0, row=8, columnspan=2, rowspan=3, padx=5, pady=5)
+progresslabel = tkinter.Label(root, text="Ready")
+progresslabel.grid(sticky='w', column=2, row=8, columnspan=3, rowspan=3, padx=5, pady=5)
 
 # Main functions
 def render():
@@ -205,119 +236,119 @@ def render():
     def interrupt():
         nonlocal interrupted; interrupted = "Render was cancelled."
     try:
-        _inputFile = inputFile.get()
-        _exportFile = exportFile.get()
-        _channelPan = float(channelPan.get())
+        _input_file = input_file.get()
+        _export_file = export_file.get()
+        _channel_pan = float(channel_pan.get())
             
         _framerate = int(framerate.get())
         _bars = int(bars.get())
-        _barSpacing = int(barSpacing.get())
-        _lerpAlpha = float(lerpAlpha.get())
-        _lerpSpeed = float(lerpSpeed.get())
+        _bar_spacing = int(bar_spacing.get())
+        _lerp_alpha = float(lerp_alpha.get())
+        _lerp_speed = float(lerp_speed.get())
         _background = background.get()
         
-        _coverageX = float(coverageX.get())
-        _coverageY = float(coverageY.get())
-        _barJustifyX = float(barJustifyX.get())
-        _barJustifyY = float(barJustifyY.get())
-        _brightnessExp = float(brightnessExp.get())
-        _heightExp = float(heightExp.get())
+        _coverage_x = float(coverage_x.get())
+        _coverage_y = float(coverage_y.get())
+        _bar_justify_x = float(bar_justify_x.get())
+        _bar_justify_y = float(bar_justify_y.get())
+        _brightness_exp = float(brightness_exp.get())
+        _height_exp = float(height_exp.get())
         
-        assert_empty(_inputFile, "Input filename")
-        assert_empty(_exportFile, "Export filename")
+        assert_empty(_input_file, "Input filename")
+        assert_empty(_export_file, "Export filename")
         assert_empty(_background, "Background filename")
     except ValueError as error:
-        interrupted = "Some provided render settings are invalid. Please double check that all render settings are filled, and check the output for details.\nIf all settings were filled, please report this as an issue."
+        interrupted = "Some provided render settings are invalid. Please double check that all render settings are filled, and check the output for details.\nif all settings were filled, please report this as an issue."
         tkinter.messagebox.showerror("Render settings invalidated", interrupted)
         print("Render settings invalidated:", error)
         return
 
-    waveObject = wave.open("files/" + _inputFile)
+    waveobject = wave.open("files/" + _input_file)
         
-    sampleRate = waveObject.getframerate()
-    nSamples = waveObject.getnframes()
-    tAudio = nSamples/sampleRate
+    samplerate = waveobject.getframerate()
+    nsamples = waveobject.getnframes()
+    taudio = nsamples/samplerate
 
-    signalWave = waveObject.readframes(nSamples)
-    signalArray = numpy.frombuffer(signalWave, dtype=numpy.int16)
+    signalwave = waveobject.readframes(nsamples)
+    signalarray = numpy.frombuffer(signalwave, dtype=numpy.int16)
 
-    lChannel = signalArray[0::2]
-    rChannel = signalArray[1::2]
-    channelAverage = abs(numpy.array(lChannel) * _channelPan + numpy.array(rChannel) * (1 - _channelPan))
-    spectogram = plt.specgram(channelAverage, Fs=sampleRate, vmin=0, vmax=50)
+    lchannel = signalarray[0::2]
+    rchannel = signalarray[1::2]
+    channelaverage = abs(numpy.array(lchannel) * _channel_pan + numpy.array(rchannel) * (1 - _channel_pan))
+    spectogram = plt.specgram(channelaverage, Fs=samplerate, vmin=0, vmax=50)
 
-    peakSignal = toSignalScale(numpy.max(channelAverage))
+    peaksignal = to_signal_scale(numpy.max(channelaverage))
 
-    frameInterval = sampleRate / _framerate
+    frameinterval = samplerate / _framerate
 
-    freqMult = len(spectogram[1]) / 1.25 / _bars
-    timeLen = len(spectogram[2])
-    frameInterval = timeLen / (nSamples / frameInterval)
+    freqmult = len(spectogram[1]) / 1.25 / _bars
+    timelen = len(spectogram[2])
+    frameinterval = timelen / (nsamples / frameinterval)
 
-    frameCount = math.floor(timeLen/frameInterval)
+    framecount = math.floor(timelen/frameinterval)
 
-    print("File is %0.3f" %tAudio, "seconds long, render length: " + str(frameCount) + " frames.")
+    print("File is %0.3f" %taudio, "seconds long, render length: " + str(framecount) + " frames.")
 
-    cImage = Image.open('files/' + _background).convert("RGB")
-    imageWidth, imageHeight = cImage.size
+    cimage = Image.open('files/' + _background).convert("RGB")
+    imagewidth, imageheight = cimage.size
 
-    video = ffmpeg.input('pipe:', format='rawvideo', pix_fmt='rgb24', s='{}x{}'.format(imageWidth, imageHeight), r=_framerate)
-    audio = ffmpeg.input('files/' + _inputFile)
+    video = ffmpeg.input('pipe:', format='rawvideo', pixfmt='rgb24', s='{}x{}'.format(imagewidth, imageheight), r=_framerate)
+    audio = ffmpeg.input('files/' + _input_file)
 
     process = (
         ffmpeg
         .concat(video, audio, v=1, a=1)
-        .output('export/' + _exportFile, pix_fmt='yuv420p', vcodec='libx264', r=_framerate)
-        .overwrite_output()
-        .run_async(pipe_stdin=True)
+        .output('export/' + _export_file, pixfmt='yuv420p', vcodec='libx264', r=_framerate)
+        .overwriteoutput()
+        .runasync(pipestdin=True)
     )
     
-    renderStart = timeit.default_timer()
+    renderstart = timeit.defaulttimer()
 
-    prevSignals = [0] * _bars
-    progressBar.configure(maximum = frameCount - 1)
+    prevsignals = [0] * _bars
+    progressbar.configure(maximum = framecount - 1)
     complete = threading.Event()
-    widthGap = 1 - _coverageX
-    def drawF(frameNo: int):
-        if interrupted or frameNo >= frameCount:
+    widthgap = 1 - _coverage_x
+    def drawF(frameno: int):
+        if interrupted or frameno >= framecount:
             return False
         
-        elapsed = timeit.default_timer() - renderStart
-        progressLabel.configure(text=f"Rendering... {elapsed:.1f}s elapsed - {frameNo}/{frameCount} - {frameNo/elapsed:.1f}/s - {frameNo/elapsed/_framerate:.3f}x render speed")
-        progressBar['value'] = frameNo
+        elapsed = timeit.defaulttimer() - renderstart
+        progresslabel.configure(text=f"Rendering... {elapsed:.1f}s elapsed - {frameno}/{framecount} - {frameno/elapsed:.1f}/s - {frameno/elapsed/_framerate:.3f}x render speed")
+        progressbar['value'] = frameno
         
-        frame = cImage.copy()  
+        frame = cimage.copy()  
         draw = ImageDraw.Draw(frame)
 
         for bar in range(0, _bars):
-            rawSignal = spectogram[0][round(bar * freqMult)][round(frameNo * frameInterval)]
-            adjustedLerp = 1 - math.pow(1 - _lerpAlpha, _lerpSpeed/_framerate)
-            signal = toSignalScale(rawSignal) * adjustedLerp + prevSignals[bar] * (1 - adjustedLerp)
-            prevSignals[bar] = signal
-            signalFraction = signal / peakSignal
+            rawsignal = spectogram[0][round(bar * freqmult)][round(frameno * frameinterval)]
+            adjustedlerp = 1 - math.pow(1 - _lerp_alpha, _lerp_speed/_framerate)
+            signal = to_signal_scale(rawsignal) * adjustedlerp + prevsignals[bar] * (1 - adjustedlerp)
+            prevsignals[bar] = signal
+            signalfraction = signal / peaksignal
             
-            width = _coverageX / _bars
-            height = _coverageY * abs(math.pow(signalFraction, _heightExp))
-            heightGap = 1 - height
-            fillBrightness = int(255 * math.pow(signalFraction, _brightnessExp))
+            width = _coverage_x / _bars
+            height = _coverage_y * abs(math.pow(signalfraction, _height_exp))
+            heightgap = 1 - height
+            fillbrightness = int(255 * math.pow(signalfraction, _brightness_exp))
             
             draw.rectangle(
                 (
-                    (widthGap * _barJustifyX + width * bar) * imageWidth + math.floor(_barSpacing / 2),
-                    (heightGap * _barJustifyY) * imageHeight,
-                    (widthGap * _barJustifyX + width * (bar + 1)) * imageWidth - math.ceil(_barSpacing / 2),
-                    (heightGap * _barJustifyY + height) * imageHeight
-                ), fill = (fillBrightness, fillBrightness, fillBrightness))
+                    (widthgap * _bar_justify_x + width * bar) * imagewidth + math.floor(_bar_spacing / 2),
+                    (heightgap * _bar_justify_y) * imageheight,
+                    (widthgap * _bar_justify_x + width * (bar + 1)) * imagewidth - math.ceil(_bar_spacing / 2),
+                    (heightgap * _bar_justify_y + height) * imageheight
+                ), fill = (fillbrightness, fillbrightness, fillbrightness))
 
         process.stdin.write(
             numpy.array(frame).tobytes()
         )
         
         return True
-    def drawWrapper(frameNo: int = 0):
+    def drawwrapper(frameno: int = 0):
         try:
-            if drawF(frameNo):
-                root.after(1, lambda: drawWrapper(frameNo + 1))
+            if drawF(frameno):
+                root.after(1, lambda: drawwrapper(frameno + 1))
             else:
                 complete.set()
         except Exception as error:
@@ -325,22 +356,22 @@ def render():
             tkinter.messagebox.showerror("Render interrupted", interrupted)
             print("Exception was caught:", error)
     
-    continueButton.configure(text='Cancel', command=interrupt)
+    continuebutton.configure(text='Cancel', command=interrupt)
     
-    root.after(1, drawWrapper)
+    root.after(1, drawwrapper)
 
     complete.wait()
     process.stdin.close()
     process.wait()
     
-    progressBar['value'] = 0
-    continueButton.configure(text='Render', command=lambda: Thread(target=render).start())
-    totalElapsed = timeit.default_timer() - renderStart
+    progressbar['value'] = 0
+    continuebutton.configure(text='Render', command=lambda: Thread(target=render).start())
+    totalelapsed = timeit.defaulttimer() - renderstart
     if interrupted:
-        progressLabel.configure(text=interrupted)
+        progresslabel.configure(text=interrupted)
     else:
-        progressLabel.configure(text=f"Finished in {totalElapsed:.1f}s - {frameCount}/{frameCount} - {frameCount/totalElapsed:.1f}/s - {frameCount/totalElapsed/_framerate:.3f}x render speed")
+        progresslabel.configure(text=f"Finished in {totalelapsed:.1f}s - {framecount}/{framecount} - {framecount/totalelapsed:.1f}/s - {framecount/totalelapsed/_framerate:.3f}x render speed")
     
 
-continueButton.configure(command=lambda: Thread(target=render).start())
+continuebutton.configure(command=lambda: Thread(target=render).start())
 root.mainloop()
