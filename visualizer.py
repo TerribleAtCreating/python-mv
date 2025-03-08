@@ -25,6 +25,8 @@ def render():
         _brightness_exp = float(brightness_exp.get())
         _height_exp = float(height_exp.get())
         
+        _watermark = watermark.get()
+        
         assert_empty(_input_file, "Input filename")
         assert_empty(_export_file, "Export filename")
         assert_empty(_background, "Background filename")
@@ -54,11 +56,14 @@ def render():
     frame_count = math.floor(time_length/frame_interval)
 
     print("File is %0.3f" %t_audio, "seconds long, render length: " + str(frame_count) + " frames.")
+    bg_image: Image.Image = Image.open('files/' + _background).convert("RGB")
+    watermark_image: Image.Image = Image.open('files/' + _watermark).convert("RGB")
+    bg_width, bg_height = bg_image.size
+    watermark_width, watermark_height = watermark_image.size
+    watermark_size = math.max(watermark_width / bg_width, watermark_height / bg_height)
+    watermark_image = ImageOps.fit(watermark_image, ((watermark_width / watermark_size), (watermark_height / watermark_size)))
 
-    cimage = Image.open('files/' + _background).convert("RGB")
-    image_width, image_height = cimage.size
-
-    video = ffmpeg.input('pipe:', format='rawvideo', pixfmt='rgb24', s='{}x{}'.format(image_width, image_height), r=_framerate)
+    video = ffmpeg.input('pipe:', format='rawvideo', pixfmt='rgb24', s='{}x{}'.format(bg_width, bg_height), r=_framerate)
     audio = ffmpeg.input('files/' + _input_file)
 
     process = (
@@ -83,7 +88,7 @@ def render():
         progress_label.configure(text=f"Rendering... {elapsed:.1f}s elapsed - {frameno}/{frame_count} - {frameno/elapsed:.1f}/s - {frameno/elapsed/_framerate:.3f}x render speed")
         progress_bar['value'] = frameno
         
-        frame = cimage.copy()  
+        frame = bg_image.copy()  
         draw = ImageDraw.Draw(frame)
 
         for bar in range(0, _bars):
@@ -100,12 +105,14 @@ def render():
             
             draw.rectangle(
                 (
-                    (width_gap * _bar_justify_x + width * bar) * image_width + math.floor(_bar_spacing / 2),
-                    (height_gap * _bar_justify_y) * image_height,
-                    (width_gap * _bar_justify_x + width * (bar + 1)) * image_width - math.ceil(_bar_spacing / 2),
-                    (height_gap * _bar_justify_y + height) * image_height
+                    (width_gap * _bar_justify_x + width * bar) * bg_width + math.floor(_bar_spacing / 2),
+                    (height_gap * _bar_justify_y) * bg_height,
+                    (width_gap * _bar_justify_x + width * (bar + 1)) * bg_width - math.ceil(_bar_spacing / 2),
+                    (height_gap * _bar_justify_y + height) * bg_height
                 ), fill = (fill_brightness, fill_brightness, fill_brightness))
-
+        
+        frame = ImageChops.multiply(frame, watermark_image)
+        
         process.stdin.write(
             numpy.array(frame).tobytes()
         )

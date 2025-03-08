@@ -52,12 +52,14 @@ bar_justify_y = tkinter.StringVar(value=defaultpreset.get("bar_justify_y"))
 brightness_exp = tkinter.StringVar(value=defaultpreset.get("brightness_exp"))
 height_exp = tkinter.StringVar(value=defaultpreset.get("height_exp"))
 
+watermark = tkinter.StringVar(value=defaultpreset.get("watermark"))
+
 check_num_wrapper = (root.register(check_num), '%P')
 check_float_wrapper = (root.register(check_float), '%P')
 
 # Dialog buttons
 def save_preset():
-    presetpath = save_filename([('JSON Preset', '*.json')], '/presets')
+    presetpath = save_filename([DialogFiletypes.jsonPreset], '/presets')
     if not presetpath: return
     with open(presetpath, 'w') as jsonoutput:
         json.dump({
@@ -78,7 +80,7 @@ def save_preset():
             "height_exp": float(height_exp.get())
             }, jsonoutput)
 def load_preset():
-    presetpath = open_filename([('JSON Preset', '*.json')], '/presets')
+    presetpath = open_filename([DialogFiletypes.jsonPreset], '/presets')
     if not presetpath: return
     if not os.path.isfile(presetpath):
         tkinter.messagebox.showwarning("File not found", "Selected file does not exist.")
@@ -106,8 +108,8 @@ widget_list = dict()
 layout = {
     "import/export": [
         (tkinter.Label(root, text="Import/Export:"), 0, 0, 2, 1),
-        (tkinter.Label(root, text="Input file (.wav):"), 0, 1, 1, 1), (OpenFileMenu(root, text="Select audio...", targetvariable=input_file, filetypes=[('Wave audio file', '*.wav')], initialdir='/files'), 1, 1, 1, 1),
-        (tkinter.Label(root, text="Export filename:"), 0, 2, 1, 1), (SaveFileMenu(root, text="Select filename...", targetvariable=export_file, filetypes=[('MPEG-4 video file', '*.mp4')], initialdir='/export'), 1, 2, 1, 1),
+        (tkinter.Label(root, text="Input file (.wav):"), 0, 1, 1, 1), (OpenFileMenu(root, text="Select audio...", targetvariable=input_file, filetypes=[DialogFiletypes.wav], initialdir='/files'), 1, 1, 1, 1),
+        (tkinter.Label(root, text="Export filename:"), 0, 2, 1, 1), (SaveFileMenu(root, text="Select filename...", targetvariable=export_file, filetypes=[DialogFiletypes.mp4], initialdir='/export'), 1, 2, 1, 1),
         (tkinter.Label(root, text="Channel panning:"), 0, 3, 1, 1), (tkinter.Entry(root, textvariable=channel_pan, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
     ],
     "render": [
@@ -117,7 +119,7 @@ layout = {
         (tkinter.Label(root, text="Bar spacing (px):"), 2, 3, 1, 1), (tkinter.Entry(root, textvariable=bar_spacing, validate='key', validatecommand=check_num_wrapper), 3, 3, 1, 1),
         (tkinter.Label(root, text="Inbetween interpolation alpha:"), 2, 4, 1, 1), (tkinter.Entry(root, textvariable=lerp_alpha, validate='key', validatecommand=check_float_wrapper), 3, 4, 1, 1),
         (tkinter.Label(root, text="Interpolation rate:"), 2, 5, 1, 1), (tkinter.Entry(root, textvariable=lerp_speed, validate='key', validatecommand=check_float_wrapper), 3, 5, 1, 1),
-        (tkinter.Label(root, text="Background image file:"), 2, 6, 1, 1), (OpenFileMenu(root, text="Select background...", targetvariable=background, filetypes=[('PNG image file', '*.png')], initialdir='/files'), 3, 6, 1, 1),
+        (tkinter.Label(root, text="Background image file:"), 2, 6, 1, 1), (OpenFileMenu(root, text="Select background...", targetvariable=background, filetypes=[DialogFiletypes.png], initialdir='/files'), 3, 6, 1, 1),
     ],
     "bars": [
         (tkinter.Label(root, text="Bar customization:"), 4, 0, 2, 1),

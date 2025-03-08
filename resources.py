@@ -1,5 +1,13 @@
 from import_modules import *
 
+# Enumerations
+class DialogFiletypes(Enum):
+    png = ('PNG image file', '*.png')
+    json = ('JavaScript Object Notation file', '*.json')
+    jsonPreset = ('JSON preset', '*.json')
+    wav = ('Wave audio file', '*.wav')
+    mp4 = ('MPEG-4 video file', '*.mp4')
+
 # General functions
 def multiple_function(*args):
     for func in args: func()
