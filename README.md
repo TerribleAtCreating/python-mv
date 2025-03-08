@@ -26,7 +26,7 @@ It basically takes in audio, and gives you a video with all the visuals you woul
 - The "files" folder is where you'll put your .wav and .png files for rendering.
 - The "export" folder is where videos are rendered and saved.
 
-Your background image should be 1600x900 or any downscale of it for that sweet 16:9 ratio.
+Your background image should be 1920x1080 or any downscale of it for that sweet 16:9 ratio.
 - Open the python script using the "start.bat" file or via IDE
     - When asked for a file name, you must include the extension.
 
