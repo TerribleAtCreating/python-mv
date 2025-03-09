@@ -2,8 +2,9 @@ try:
     import ffmpeg
     import numpy
     import matplotlib.pyplot as plt
-    import PIL
-    from PIL import Image, ImageDraw, ImageOps, ImageChops
+    import requests
+    import webbrowser
+    from PIL import Image, ImageDraw, ImageOps, ImageChops, ImageSequence, ImageTk
 except ImportError as error:
     print("Failed to import modules:", error)
     print("Import error! Please install any missing libraries, then restart the script.")

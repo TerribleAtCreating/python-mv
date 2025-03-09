@@ -1,10 +1,12 @@
 from import_modules import *
 from resources import *
 
+app_id = u'terriac.pythonmv.main.040'
 root = tkinter.Tk()
+
 root.title("Python-MV")
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID('terriac.pythonmv')
-root.iconbitmap("pymv.ico", "pymv.ico")
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(u'mycompany.myproduct.subproduct.version')
+root.iconphoto(True, tkinter.PhotoImage(file="pymv.png"))
 
 input_file = tkinter.StringVar()
 export_file = tkinter.StringVar()
@@ -155,5 +157,15 @@ progress_bar.grid(sticky='ew', column=0, row=8, columnspan=2, rowspan=3, padx=5,
 progress_label = tkinter.Label(root, text="Ready")
 progress_label.grid(sticky='w', column=2, row=8, columnspan=3, rowspan=3, padx=5, pady=5)
 
+def check_version():
+    currentVersion = "0.4.0"
+    latestVersion = requests.get("https://raw.githubusercontent.com/TerribleAtCreating/python-mv/main/version.txt", timeout=5).text.strip()
+    if currentVersion != latestVersion:
+        if tkinter.messagebox.askyesno(
+            "New release available: v" + latestVersion,
+            "A new update for this script is available.\nWould you like to be directed to the release page?"):
+                webbrowser.open("https://github.com/TerribleAtCreating/python-mv/releases", 2, True)
+
 def launch_ui():
+    threading.Thread(target=check_version).start()
     root.mainloop()

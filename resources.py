@@ -1,8 +1,9 @@
 from import_modules import *
 
 # Enumerations
-class DialogFiletypes(Enum):
+class DialogFiletypes():
     png = ('PNG image file', '*.png')
+    gif = ('GIF animated image file', '*.gif')
     json = ('JavaScript Object Notation file', '*.json')
     jsonPreset = ('JSON preset', '*.json')
     wav = ('Wave audio file', '*.wav')

@@ -57,6 +57,8 @@ def render():
 
     print("File is %0.3f" %t_audio, "seconds long, render length: " + str(frame_count) + " frames.")
     bg_image: Image.Image = Image.open('files/' + _background).convert("RGB")
+    bg_frames = ImageSequence.Iterator(bg_image)
+    
     watermark_image: Image.Image = Image.open('files/' + _watermark).convert("RGB")
     bg_width, bg_height = bg_image.size
     watermark_width, watermark_height = watermark_image.size
