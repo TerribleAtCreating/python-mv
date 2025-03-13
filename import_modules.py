@@ -25,3 +25,4 @@ import os
 import ctypes
 import threading; from threading import Thread
 import timeit
+from packaging.version import Version

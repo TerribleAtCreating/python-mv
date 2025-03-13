@@ -1,10 +1,11 @@
 from import_modules import *
 from resources import *
 
+currentVersion = "0.4.0"
 app_id = u'terriac.pythonmv.main.040'
 root = tkinter.Tk()
 
-root.title("Python-MV")
+root.title(f"Python-MV [{currentVersion}]")
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(u'mycompany.myproduct.subproduct.version')
 root.iconphoto(True, tkinter.PhotoImage(file="pymv.png"))
 
@@ -105,32 +106,40 @@ def load_preset():
     brightness_exp.set(preset.get("brightness_exp", defaultpreset.get("brightness_exp")))
     height_exp.set(preset.get("height_exp", defaultpreset.get("height_exp")))
 
+tab_notebook = tkinter.ttk.Notebook(root)
+main_tab = tkinter.ttk.Frame(tab_notebook) 
+bar_tab = tkinter.ttk.Frame(tab_notebook) 
+
+tab_notebook.add(main_tab, text = "Main") 
+tab_notebook.add(bar_tab, text = "Graphics") 
+tab_notebook.grid(columnspan=4, rowspan=7)
+
 widget_list = dict()
 # Layout: [(Element, X, Y, Widthspan, Heightspan)]
 layout = {
     "import/export": [
-        (tkinter.Label(root, text="Import/Export:"), 0, 0, 2, 1),
-        (tkinter.Label(root, text="Input file (.wav):"), 0, 1, 1, 1), (OpenFileMenu(root, text="Select audio...", targetvariable=input_file, filetypes=[DialogFiletypes.wav], initialdir='/files'), 1, 1, 1, 1),
-        (tkinter.Label(root, text="Export filename:"), 0, 2, 1, 1), (SaveFileMenu(root, text="Select filename...", targetvariable=export_file, filetypes=[DialogFiletypes.mp4], initialdir='/export'), 1, 2, 1, 1),
-        (tkinter.Label(root, text="Channel panning:"), 0, 3, 1, 1), (tkinter.Entry(root, textvariable=channel_pan, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
+        (tkinter.Label(main_tab, text="Import/Export:"), 0, 0, 2, 1),
+        (tkinter.Label(main_tab, text="Input file (.wav):"), 0, 1, 1, 1), (OpenFileMenu(main_tab, text="Select audio...", targetvariable=input_file, filetypes=[DialogFiletypes.wav], initialdir='/files'), 1, 1, 1, 1),
+        (tkinter.Label(main_tab, text="Export filename:"), 0, 2, 1, 1), (SaveFileMenu(main_tab, text="Select filename...", targetvariable=export_file, filetypes=[DialogFiletypes.mp4], initialdir='/export'), 1, 2, 1, 1),
+        (tkinter.Label(main_tab, text="Channel panning:"), 0, 3, 1, 1), (tkinter.Entry(main_tab, textvariable=channel_pan, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
     ],
     "render": [
-        (tkinter.Label(root, text="Render settings:"), 2, 0, 2, 1),
-        (tkinter.Label(root, text="Video framerate:"), 2, 1, 1, 1), (tkinter.Entry(root, textvariable=framerate, validate='key', validatecommand=check_num_wrapper), 3, 1, 1, 1),
-        (tkinter.Label(root, text="Number of frequency bars to render:"), 2, 2, 1, 1), (tkinter.Entry(root, textvariable=bars, validate='key', validatecommand=check_num_wrapper), 3, 2, 1, 1),
-        (tkinter.Label(root, text="Bar spacing (px):"), 2, 3, 1, 1), (tkinter.Entry(root, textvariable=bar_spacing, validate='key', validatecommand=check_num_wrapper), 3, 3, 1, 1),
-        (tkinter.Label(root, text="Inbetween interpolation alpha:"), 2, 4, 1, 1), (tkinter.Entry(root, textvariable=lerp_alpha, validate='key', validatecommand=check_float_wrapper), 3, 4, 1, 1),
-        (tkinter.Label(root, text="Interpolation rate:"), 2, 5, 1, 1), (tkinter.Entry(root, textvariable=lerp_speed, validate='key', validatecommand=check_float_wrapper), 3, 5, 1, 1),
-        (tkinter.Label(root, text="Background image file:"), 2, 6, 1, 1), (OpenFileMenu(root, text="Select background...", targetvariable=background, filetypes=[DialogFiletypes.png], initialdir='/files'), 3, 6, 1, 1),
+        (tkinter.Label(main_tab, text="Render settings:"), 2, 0, 2, 1),
+        (tkinter.Label(main_tab, text="Video framerate:"), 2, 1, 1, 1), (tkinter.Entry(main_tab, textvariable=framerate, validate='key', validatecommand=check_num_wrapper), 3, 1, 1, 1),
+        (tkinter.Label(main_tab, text="Number of frequency bars to render:"), 2, 2, 1, 1), (tkinter.Entry(main_tab, textvariable=bars, validate='key', validatecommand=check_num_wrapper), 3, 2, 1, 1),
+        (tkinter.Label(main_tab, text="Bar spacing (px):"), 2, 3, 1, 1), (tkinter.Entry(main_tab, textvariable=bar_spacing, validate='key', validatecommand=check_num_wrapper), 3, 3, 1, 1),
+        (tkinter.Label(main_tab, text="Inbetween interpolation alpha:"), 2, 4, 1, 1), (tkinter.Entry(main_tab, textvariable=lerp_alpha, validate='key', validatecommand=check_float_wrapper), 3, 4, 1, 1),
+        (tkinter.Label(main_tab, text="Interpolation rate:"), 2, 5, 1, 1), (tkinter.Entry(main_tab, textvariable=lerp_speed, validate='key', validatecommand=check_float_wrapper), 3, 5, 1, 1),
+        (tkinter.Label(main_tab, text="Background image file:"), 2, 6, 1, 1), (OpenFileMenu(main_tab, text="Select background...", targetvariable=background, filetypes=[DialogFiletypes.png], initialdir='/files'), 3, 6, 1, 1),
     ],
     "bars": [
-        (tkinter.Label(root, text="Bar customization:"), 4, 0, 2, 1),
-        (tkinter.Label(root, text="Screen coverage width:"), 4, 1, 1, 1), (tkinter.Entry(root, textvariable=coverage_x, validate='key', validatecommand=check_float_wrapper), 5, 1, 1, 1),
-        (tkinter.Label(root, text="Screen coverage height:"), 4, 2, 1, 1), (tkinter.Entry(root, textvariable=coverage_y, validate='key', validatecommand=check_float_wrapper), 5, 2, 1, 1),
-        (tkinter.Label(root, text="Horizontal justification (left-right):"), 4, 3, 1, 1), (tkinter.Entry(root, textvariable=bar_justify_x, validate='key', validatecommand=check_float_wrapper), 5, 3, 1, 1),
-        (tkinter.Label(root, text="Vertical justification (top-bottom):"), 4, 4, 1, 1), (tkinter.Entry(root, textvariable=bar_justify_y, validate='key', validatecommand=check_float_wrapper), 5, 4, 1, 1),
-        (tkinter.Label(root, text="Brightness exponent:"), 4, 5, 1, 1), (tkinter.Entry(root, textvariable=brightness_exp, validate='key', validatecommand=check_float_wrapper), 5, 5, 1, 1),
-        (tkinter.Label(root, text="Height exponent:"), 4, 6, 1, 1), (tkinter.Entry(root, textvariable=height_exp, validate='key', validatecommand=check_float_wrapper), 5, 6, 1, 1),
+        (tkinter.Label(bar_tab, text="Bar customization:"), 0, 0, 2, 1),
+        (tkinter.Label(bar_tab, text="Screen coverage width:"), 0, 1, 1, 1), (tkinter.Entry(bar_tab, textvariable=coverage_x, validate='key', validatecommand=check_float_wrapper), 1, 1, 1, 1),
+        (tkinter.Label(bar_tab, text="Screen coverage height:"), 0, 2, 1, 1), (tkinter.Entry(bar_tab, textvariable=coverage_y, validate='key', validatecommand=check_float_wrapper), 1, 2, 1, 1),
+        (tkinter.Label(bar_tab, text="Horizontal justification (left-right):"), 0, 3, 1, 1), (tkinter.Entry(bar_tab, textvariable=bar_justify_x, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
+        (tkinter.Label(bar_tab, text="Vertical justification (top-bottom):"), 0, 4, 1, 1), (tkinter.Entry(bar_tab, textvariable=bar_justify_y, validate='key', validatecommand=check_float_wrapper), 1, 4, 1, 1),
+        (tkinter.Label(bar_tab, text="Brightness exponent:"), 0, 5, 1, 1), (tkinter.Entry(bar_tab, textvariable=brightness_exp, validate='key', validatecommand=check_float_wrapper), 1, 5, 1, 1),
+        (tkinter.Label(bar_tab, text="Height exponent:"), 0, 6, 1, 1), (tkinter.Entry(bar_tab, textvariable=height_exp, validate='key', validatecommand=check_float_wrapper), 1, 6, 1, 1),
     ],
     "presets": [
         (tkinter.Button(root, text="Save Preset", command=save_preset), 0, 7, 1, 1),
@@ -158,9 +167,8 @@ progress_label = tkinter.Label(root, text="Ready")
 progress_label.grid(sticky='w', column=2, row=8, columnspan=3, rowspan=3, padx=5, pady=5)
 
 def check_version():
-    currentVersion = "0.4.0"
     latestVersion = requests.get("https://raw.githubusercontent.com/TerribleAtCreating/python-mv/main/version.txt", timeout=5).text.strip()
-    if currentVersion != latestVersion:
+    if Version(currentVersion) < Version(latestVersion):
         if tkinter.messagebox.askyesno(
             "New release available: v" + latestVersion,
             "A new update for this script is available.\nWould you like to be directed to the release page?"):
