@@ -18,8 +18,8 @@ import re
 
 import wave
 
-import tkinter; import tkinter.filedialog; import tkinter.messagebox
-import tkinter.ttk
+from tkinter import *
+import tkinter.ttk as tkinter
 
 import os
 import ctypes

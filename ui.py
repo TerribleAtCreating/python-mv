@@ -3,15 +3,15 @@ from resources import *
 
 currentVersion = "0.4.0"
 app_id = u'terriac.pythonmv.main.040'
-root = tkinter.Tk()
+root = Tk()
 
 root.title(f"Python-MV [{currentVersion}]")
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(u'mycompany.myproduct.subproduct.version')
-root.iconphoto(True, tkinter.PhotoImage(file="pymv.png"))
+root.iconphoto(True, PhotoImage(file="pymv.png"))
 
-input_file = tkinter.StringVar()
-export_file = tkinter.StringVar()
-channel_pan = tkinter.StringVar()
+input_file = StringVar()
+export_file = StringVar()
+channel_pan = StringVar()
 
 defaultpreset = {
     "channel_pan": .5,
@@ -25,7 +25,8 @@ defaultpreset = {
     "bar_justify_x": .5,
     "bar_justify_y": 1,
     "brightness_exp": 0,
-    "height_exp": .5
+    "height_exp": .5,
+    "watermark_toggle": True
 }
 
 justify_horizontal = [
@@ -39,23 +40,25 @@ justify_vertical = [
 "Bottom"
 ]
 
-channel_pan = tkinter.StringVar(value=defaultpreset.get("channel_pan"))
+channel_pan = StringVar(value=defaultpreset.get("channel_pan"))
 
-framerate = tkinter.StringVar(value=defaultpreset.get("framerate"))
-bars = tkinter.StringVar(value=defaultpreset.get("bars"))
-bar_spacing = tkinter.StringVar(value=defaultpreset.get("bar_spacing"))
-lerp_alpha = tkinter.StringVar(value=defaultpreset.get("lerp_alpha"))
-lerp_speed = tkinter.StringVar(value=defaultpreset.get("lerp_speed"))
-background = tkinter.StringVar(value=defaultpreset.get("background"))
+framerate = StringVar(value=defaultpreset.get("framerate"))
+bars = StringVar(value=defaultpreset.get("bars"))
+bar_spacing = StringVar(value=defaultpreset.get("bar_spacing"))
+lerp_alpha = StringVar(value=defaultpreset.get("lerp_alpha"))
+lerp_speed = StringVar(value=defaultpreset.get("lerp_speed"))
+background = StringVar(value=defaultpreset.get("background"))
 
-coverage_x = tkinter.StringVar(value=defaultpreset.get("coverage_x"))
-coverage_y = tkinter.StringVar(value=defaultpreset.get("coverage_y"))
-bar_justify_x = tkinter.StringVar(value=defaultpreset.get("bar_justify_x"))
-bar_justify_y = tkinter.StringVar(value=defaultpreset.get("bar_justify_y"))
-brightness_exp = tkinter.StringVar(value=defaultpreset.get("brightness_exp"))
-height_exp = tkinter.StringVar(value=defaultpreset.get("height_exp"))
+coverage_x = StringVar(value=defaultpreset.get("coverage_x"))
+coverage_y = StringVar(value=defaultpreset.get("coverage_y"))
+bar_justify_x = StringVar(value=defaultpreset.get("bar_justify_x"))
+bar_justify_y = StringVar(value=defaultpreset.get("bar_justify_y"))
+brightness_exp = StringVar(value=defaultpreset.get("brightness_exp"))
+height_exp = StringVar(value=defaultpreset.get("height_exp"))
 
-watermark = tkinter.StringVar(value=defaultpreset.get("watermark"))
+watermark_file = StringVar(value=defaultpreset.get("watermark_file"))
+watermark_toggle = BooleanVar(value=defaultpreset.get("watermark_toggle"))
+watermark_blending = StringVar(value=defaultpreset.get("watermark_blending"))
 
 check_num_wrapper = (root.register(check_num), '%P')
 check_float_wrapper = (root.register(check_float), '%P')
@@ -106,40 +109,48 @@ def load_preset():
     brightness_exp.set(preset.get("brightness_exp", defaultpreset.get("brightness_exp")))
     height_exp.set(preset.get("height_exp", defaultpreset.get("height_exp")))
 
-tab_notebook = tkinter.ttk.Notebook(root)
-main_tab = tkinter.ttk.Frame(tab_notebook) 
-bar_tab = tkinter.ttk.Frame(tab_notebook) 
+tab_notebook = tkinter.Notebook(root)
+main_tab = tkinter.Frame(tab_notebook) 
+bar_tab = tkinter.Frame(tab_notebook)
+watermark_tab = tkinter.Frame(tab_notebook)
 
 tab_notebook.add(main_tab, text = "Main") 
-tab_notebook.add(bar_tab, text = "Graphics") 
+tab_notebook.add(bar_tab, text = "Graphics")
+tab_notebook.add(watermark_tab, text = "Watermark")
 tab_notebook.grid(columnspan=4, rowspan=7)
 
 widget_list = dict()
 # Layout: [(Element, X, Y, Widthspan, Heightspan)]
 layout = {
     "import/export": [
-        (tkinter.Label(main_tab, text="Import/Export:"), 0, 0, 2, 1),
-        (tkinter.Label(main_tab, text="Input file (.wav):"), 0, 1, 1, 1), (OpenFileMenu(main_tab, text="Select audio...", targetvariable=input_file, filetypes=[DialogFiletypes.wav], initialdir='/files'), 1, 1, 1, 1),
-        (tkinter.Label(main_tab, text="Export filename:"), 0, 2, 1, 1), (SaveFileMenu(main_tab, text="Select filename...", targetvariable=export_file, filetypes=[DialogFiletypes.mp4], initialdir='/export'), 1, 2, 1, 1),
+        (tkinter.Label(main_tab, text="Import/export settings"), 0, 0, 2, 1),
+        (tkinter.Label(main_tab, text="Input file (.wav):"), 0, 1, 1, 1), (OpenFileMenu(main_tab, text="Select audio...", variable=input_file, filetypes=[DialogFiletypes.wav], initialdir='/files'), 1, 1, 1, 1),
+        (tkinter.Label(main_tab, text="Export filename:"), 0, 2, 1, 1), (SaveFileMenu(main_tab, text="Select filename...", variable=export_file, filetypes=[DialogFiletypes.mp4], initialdir='/export'), 1, 2, 1, 1),
         (tkinter.Label(main_tab, text="Channel panning:"), 0, 3, 1, 1), (tkinter.Entry(main_tab, textvariable=channel_pan, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
     ],
     "render": [
-        (tkinter.Label(main_tab, text="Render settings:"), 2, 0, 2, 1),
+        (tkinter.Label(main_tab, text="Render settings"), 2, 0, 2, 1),
         (tkinter.Label(main_tab, text="Video framerate:"), 2, 1, 1, 1), (tkinter.Entry(main_tab, textvariable=framerate, validate='key', validatecommand=check_num_wrapper), 3, 1, 1, 1),
         (tkinter.Label(main_tab, text="Number of frequency bars to render:"), 2, 2, 1, 1), (tkinter.Entry(main_tab, textvariable=bars, validate='key', validatecommand=check_num_wrapper), 3, 2, 1, 1),
         (tkinter.Label(main_tab, text="Bar spacing (px):"), 2, 3, 1, 1), (tkinter.Entry(main_tab, textvariable=bar_spacing, validate='key', validatecommand=check_num_wrapper), 3, 3, 1, 1),
         (tkinter.Label(main_tab, text="Inbetween interpolation alpha:"), 2, 4, 1, 1), (tkinter.Entry(main_tab, textvariable=lerp_alpha, validate='key', validatecommand=check_float_wrapper), 3, 4, 1, 1),
         (tkinter.Label(main_tab, text="Interpolation rate:"), 2, 5, 1, 1), (tkinter.Entry(main_tab, textvariable=lerp_speed, validate='key', validatecommand=check_float_wrapper), 3, 5, 1, 1),
-        (tkinter.Label(main_tab, text="Background image file:"), 2, 6, 1, 1), (OpenFileMenu(main_tab, text="Select background...", targetvariable=background, filetypes=[DialogFiletypes.png], initialdir='/files'), 3, 6, 1, 1),
+        (tkinter.Label(main_tab, text="Background image file:"), 2, 6, 1, 1), (OpenFileMenu(main_tab, text="Select background...", variable=background, filetypes=[DialogFiletypes.png], initialdir='/files'), 3, 6, 1, 1),
     ],
     "bars": [
-        (tkinter.Label(bar_tab, text="Bar customization:"), 0, 0, 2, 1),
+        (tkinter.Label(bar_tab, text="Bar customization"), 0, 0, 2, 1),
         (tkinter.Label(bar_tab, text="Screen coverage width:"), 0, 1, 1, 1), (tkinter.Entry(bar_tab, textvariable=coverage_x, validate='key', validatecommand=check_float_wrapper), 1, 1, 1, 1),
         (tkinter.Label(bar_tab, text="Screen coverage height:"), 0, 2, 1, 1), (tkinter.Entry(bar_tab, textvariable=coverage_y, validate='key', validatecommand=check_float_wrapper), 1, 2, 1, 1),
         (tkinter.Label(bar_tab, text="Horizontal justification (left-right):"), 0, 3, 1, 1), (tkinter.Entry(bar_tab, textvariable=bar_justify_x, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
         (tkinter.Label(bar_tab, text="Vertical justification (top-bottom):"), 0, 4, 1, 1), (tkinter.Entry(bar_tab, textvariable=bar_justify_y, validate='key', validatecommand=check_float_wrapper), 1, 4, 1, 1),
         (tkinter.Label(bar_tab, text="Brightness exponent:"), 0, 5, 1, 1), (tkinter.Entry(bar_tab, textvariable=brightness_exp, validate='key', validatecommand=check_float_wrapper), 1, 5, 1, 1),
         (tkinter.Label(bar_tab, text="Height exponent:"), 0, 6, 1, 1), (tkinter.Entry(bar_tab, textvariable=height_exp, validate='key', validatecommand=check_float_wrapper), 1, 6, 1, 1),
+    ],
+    "watermark": [
+        (tkinter.Label(watermark_tab, text="Watermark settings"), 0, 0, 2, 1),
+        (tkinter.Label(watermark_tab, text="Toggle watermark"), 0, 1, 1, 1), (Checkbox(watermark_tab, ontext="Enabled", offtext="Disabled", variable=watermark_toggle), 1, 1, 1, 1),
+        (tkinter.Label(watermark_tab, text="Watermark image:"), 0, 2, 1, 1), (OpenFileMenu(watermark_tab, text="Select watermark...", variable=watermark_file, filetypes=[DialogFiletypes.png], initialdir='/files'), 1, 2, 1, 1),
+        (tkinter.Label(watermark_tab, text="Watermark blending mode:"), 0, 3, 1, 1), (tkinter.OptionMenu(watermark_tab, watermark_blending, *BlendingModes.keys()), 1, 3, 1, 1),
     ],
     "presets": [
         (tkinter.Button(root, text="Save Preset", command=save_preset), 0, 7, 1, 1),
@@ -161,7 +172,7 @@ for category, elements in layout.items():
 continue_button = tkinter.Button(root, text="Render")
 continue_button.grid(column=2, row=7, columnspan=1, rowspan=1, padx=5, pady=5)
 
-progress_bar = tkinter.ttk.Progressbar(root, orient="horizontal", mode="determinate", maximum=1)
+progress_bar = tkinter.Progressbar(root, orient="horizontal", mode="determinate", maximum=1)
 progress_bar.grid(sticky='ew', column=0, row=8, columnspan=2, rowspan=3, padx=5, pady=5)
 progress_label = tkinter.Label(root, text="Ready")
 progress_label.grid(sticky='w', column=2, row=8, columnspan=3, rowspan=3, padx=5, pady=5)

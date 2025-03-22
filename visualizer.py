@@ -25,7 +25,8 @@ def render():
         _brightness_exp = float(brightness_exp.get())
         _height_exp = float(height_exp.get())
         
-        _watermark = watermark.get()
+        _watermark_toggle = watermark_toggle.get()
+        _watermark_file = watermark_file.get()
         
         assert_empty(_input_file, "Input filename")
         assert_empty(_export_file, "Export filename")
@@ -54,12 +55,12 @@ def render():
     time_length = len(spectogram[2])
     frame_interval = time_length / (n_samples / (sample_rate / _framerate))
     frame_count = math.floor(time_length/frame_interval)
+    frame_length = time_length / frame_count
 
     print("File is %0.3f" %t_audio, "seconds long, render length: " + str(frame_count) + " frames.")
     bg_image: Image.Image = Image.open('files/' + _background).convert("RGB")
-    bg_frames = ImageSequence.Iterator(bg_image)
     
-    watermark_image: Image.Image = Image.open('files/' + _watermark).convert("RGB")
+    watermark_image: Image.Image = Image.open('files/' + _watermark_file).convert("RGB")
     bg_width, bg_height = bg_image.size
     watermark_width, watermark_height = watermark_image.size
     watermark_size = math.max(watermark_width / bg_width, watermark_height / bg_height)
@@ -113,7 +114,7 @@ def render():
                     (height_gap * _bar_justify_y + height) * bg_height
                 ), fill = (fill_brightness, fill_brightness, fill_brightness))
         
-        frame = ImageChops.multiply(frame, watermark_image)
+        frame = ImageChops.add(frame, watermark_image)
         
         process.stdin.write(
             numpy.array(frame).tobytes()
