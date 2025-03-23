@@ -2,7 +2,7 @@ from import_modules import *
 from resources import *
 from ui import *
 
-def render():
+def render(preview=False):
     interrupted = False
     def interrupt():
         nonlocal interrupted; interrupted = "Render was cancelled."
@@ -10,9 +10,12 @@ def render():
         assert_empty(input_file.get(), "Input filename")
         assert_empty(export_file.get(), "Export filename")
         assert_empty(background.get(), "Background filename")
+        if watermark_toggle.get():
+            assert_empty(watermark_file.get(), "Background filename")
+            assert_enum(watermark_blending.get(), BlendingModes, "Watermark blending mode")
     except ValueError as error:
         interrupted = "Some provided render settings are invalid. Please double check that all render settings are filled, and check the output for details.\nif all settings were filled, please report this as an issue."
-        ttk.messagebox.showerror("Render settings invalidated", interrupted)
+        tkinter.messagebox.showerror("Render settings invalidated", interrupted)
         print("Render settings invalidated:", error)
         return
 
@@ -20,7 +23,6 @@ def render():
         
     sample_rate = wave_object.getframerate()
     n_samples = wave_object.getnframes()
-    t_audio = n_samples/sample_rate
     signal_wave = wave_object.readframes(n_samples)
     signal_array = numpy.frombuffer(signal_wave, dtype=numpy.int16)
 
@@ -28,57 +30,51 @@ def render():
     r_channel = signal_array[1::2]
     channel_average = abs(numpy.array(l_channel) * float(channel_pan.get()) + numpy.array(r_channel) * (1 - float(channel_pan.get())))
     spectogram = plt.specgram(channel_average, Fs=sample_rate, vmin=0, vmax=50)
-    peak_signal = to_signal_scale(numpy.max(channel_average))
+    peak_signal = preview and 1 or to_signal_scale(numpy.max(channel_average))
 
     freq_mult = len(spectogram[1]) / 1.25 / int(bars.get())
     time_length = len(spectogram[2])
     frame_interval = time_length / (n_samples / (sample_rate / int(framerate.get())))
     frame_count = math.floor(time_length/frame_interval)
-    frame_length = time_length / frame_count
+    # frame_length = time_length / frame_count: will be used later for timeline based effects
 
-    print("File is %0.3f" %t_audio, "seconds long, render length: " + str(frame_count) + " frames.")
     bg_image: Image.Image = Image.open('files/' + background.get()).convert("RGB")
     
-    watermark_image: Image.Image = Image.open('files/' + watermark_file.get()).convert("RGB")
     bg_width, bg_height = bg_image.size
-    watermark_width, watermark_height = watermark_image.size
-    watermark_size = math.max(watermark_width / bg_width, watermark_height / bg_height)
-    watermark_image = ImageOps.fit(watermark_image, ((watermark_width / watermark_size), (watermark_height / watermark_size)))
-
-    video = ffmpeg.input('pipe:', format='rawvideo', pixfmt='rgb24', s='{}x{}'.format(bg_width, bg_height), r=int(framerate.get()))
-    audio = ffmpeg.input('files/' + input_file.get())
-
-    process = (
-        ffmpeg
-        .concat(video, audio, v=1, a=1)
-        .output('export/' + export_file.get(), pixfmt='yuv420p', vcodec='libx264', r=int(framerate.get()))
-        .overwriteoutput()
-        .runasync(pipestdin=True)
-    )
     
-    render_start = timeit.defaulttimer()
+    if watermark_toggle.get():
+        watermark_image: Image.Image = Image.open('files/' + watermark_file.get()).convert("RGB")
+        watermark_width, watermark_height = watermark_image.size
+        watermark_adjust = 1 / max(watermark_width / bg_width, watermark_height / bg_height) * float(watermark_size.get())
+        resized_watermark = Image.new("RGB", (bg_width, bg_height), (0, 0, 0))
+        resized_watermark.paste(ImageOps.scale(watermark_image, watermark_adjust), (int(bg_width / 2 - watermark_width / 2), int(bg_height / 2 - watermark_height / 2)))
+    
+    render_start = timeit.default_timer()
 
     previous_signals = [0] * int(bars.get())
     progress_bar.configure(maximum = frame_count - 1)
     complete = threading.Event()
     width_gap = 1 - float(coverage_x.get())
-    def drawF(frameno: int):
-        if interrupted or frameno >= frame_count:
+    
+    blender = BlendingModes[watermark_blending.get()]
+    def drawF(frame_no: int = 0):
+        if interrupted or frame_no >= frame_count:
             return False
         
-        elapsed = timeit.defaulttimer() - render_start
-        progress_label.configure(text=f"Rendering... {elapsed:.1f}s elapsed - {frameno}/{frame_count} - {frameno/elapsed:.1f}/s - {frameno/elapsed/int(framerate.get()):.3f}x render speed")
-        progress_bar['value'] = frameno
+        elapsed = timeit.default_timer() - render_start
+        if not preview:
+            progress_label.configure(text=f"Rendering... {elapsed:.1f}s elapsed - {frame_no}/{frame_count} - {frame_no/elapsed:.1f}/s - {frame_no/elapsed/int(framerate.get()):.3f}x render speed")
+            progress_bar['value'] = frame_no
         
         frame = bg_image.copy()  
         draw = ImageDraw.Draw(frame)
 
         for bar in range(0, int(bars.get())):
-            raw_signal = spectogram[0][round(bar * freq_mult)][round(frameno * frame_interval)]
+            raw_signal = spectogram[0][round(bar * freq_mult)][round(frame_no * frame_interval)]
             adjusted_lerp = 1 - math.pow(1 - float(lerp_alpha.get()), float(lerp_speed.get())/int(framerate.get()))
             signal = to_signal_scale(raw_signal) * adjusted_lerp + previous_signals[bar] * (1 - adjusted_lerp)
             previous_signals[bar] = signal
-            signal_fraction = signal / peak_signal
+            signal_fraction = preview and bar / (int(bars.get()) - 1) or signal / peak_signal
             
             width = float(coverage_x.get()) / int(bars.get())
             height = float(coverage_y.get()) * abs(math.pow(signal_fraction, float(height_exp.get())))
@@ -93,19 +89,36 @@ def render():
                     (height_gap * float(bar_justify_y.get()) + height) * bg_height
                 ), fill = (fill_brightness, fill_brightness, fill_brightness))
         
-        frame = ImageChops.add(frame, watermark_image)
+        if watermark_toggle.get(): frame = blender(frame, resized_watermark)
         return frame
-    def drawwrapper(frameno: int = 0):
+
+    if preview:
+        preview_path = 'export/preview.png'
+        drawF().save(preview_path)
+        os.startfile(os.path.abspath(preview_path))
+            
+        return
+    else:
+        video = ffmpeg.input('pipe:', format='rawvideo', pix_fmt='rgb24', s='{}x{}'.format(bg_width, bg_height), r=int(framerate.get()))
+        audio = ffmpeg.input('files/' + input_file.get())
+        process = (
+            ffmpeg
+            .concat(video, audio, v=1, a=1)
+            .output('export/' + export_file.get(), pix_fmt='yuv420p', vcodec='libx264', r=int(framerate.get()))
+            .overwrite_output()
+            .run_async(pipe_stdin=True)
+        )
+    def drawwrapper(frame_no: int = 0):
         try:
-            frame = drawF(frameno)
-            if drawF(frameno):
+            frame = drawF(frame_no)
+            if drawF(frame_no):
                 process.stdin.write(numpy.array(frame).tobytes())
-                root.after(1, lambda: drawwrapper(frameno + 1))
+                root.after(1, lambda: drawwrapper(frame_no + 1))
             else:
                 complete.set()
         except Exception as error:
             nonlocal interrupted; interrupted = "A problem occured, please check the output for errors."
-            ttk.messagebox.showerror("Render interrupted", interrupted)
+            tkinter.messagebox.showerror("Render interrupted", interrupted)
             print("Exception was caught:", error)
     
     continue_button.configure(text='Cancel', command=interrupt)
@@ -120,11 +133,12 @@ def render():
     progress_bar['value'] = 0
     continue_button.configure(text='Render', command=lambda: Thread(target=render).start())
     set_ui_state('normal')
-    total_elapsed = timeit.defaulttimer() - render_start
+    total_elapsed = timeit.default_timer() - render_start
     if interrupted:
         progress_label.configure(text=interrupted)
     else:
         progress_label.configure(text=f"Finished in {total_elapsed:.1f}s - {frame_count}/{frame_count} - {frame_count/total_elapsed:.1f}/s - {frame_count/total_elapsed/int(framerate.get()):.3f}x render speed")
         
 continue_button.configure(command=lambda: Thread(target=render).start())
+preview_button.configure(command=lambda: Thread(target=render, args=[True]).start())
 launch_ui()

@@ -19,8 +19,8 @@ import re
 import wave
 
 import tkinter as tk
-import tkinter.filedialog
 import tkinter.ttk as ttk
+import tkinter.filedialog, tkinter.messagebox
 
 import os
 import ctypes

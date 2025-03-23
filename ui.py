@@ -6,7 +6,7 @@ app_id = u'terriac.pythonmv.main.040'
 root = tk.Tk()
 
 root.title(f"Python-MV [{currentVersion}]")
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(u'mycompany.myproduct.subproduct.version')
+ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
 root.iconphoto(True, tk.PhotoImage(file="pymv.png"))
 
 input_file = tk.StringVar()
@@ -26,7 +26,9 @@ defaultpreset = {
     "bar_justify_y": 1,
     "brightness_exp": 0,
     "height_exp": .5,
-    "watermark_toggle": True
+    "watermark_size": .5,
+    "watermark_toggle": False,
+    "watermark_blending": "Additive"
 }
 """
 justify_horizontal = [
@@ -59,6 +61,7 @@ brightness_exp = tk.StringVar(value=defaultpreset.get("brightness_exp"))
 height_exp = tk.StringVar(value=defaultpreset.get("height_exp"))
 
 watermark_file = tk.StringVar(value=defaultpreset.get("watermark_file"))
+watermark_size = tk.StringVar(value=defaultpreset.get("watermark_size"))
 watermark_toggle = tk.BooleanVar(value=defaultpreset.get("watermark_toggle"))
 watermark_blending = tk.StringVar(value=defaultpreset.get("watermark_blending"))
 
@@ -85,7 +88,12 @@ def save_preset():
             "bar_justify_x": float(bar_justify_x.get()),
             "bar_justify_y": float(bar_justify_y.get()),
             "brightness_exp": float(brightness_exp.get()),
-            "height_exp": float(height_exp.get())
+            "height_exp": float(height_exp.get()),
+            
+            "watermark_file": watermark_file.get(),
+            "watermark_size": float(watermark_size.get()),
+            "watermark_toggle": watermark_toggle.get(),
+            "watermark_blending": watermark_blending.get()
             }, jsonoutput)
 def load_preset():
     presetpath = open_filename([DialogFiletypes.jsonPreset], '/presets')
@@ -110,6 +118,11 @@ def load_preset():
     bar_justify_y.set(preset.get("bar_justify_y", defaultpreset.get("bar_justify_y")))
     brightness_exp.set(preset.get("brightness_exp", defaultpreset.get("brightness_exp")))
     height_exp.set(preset.get("height_exp", defaultpreset.get("height_exp")))
+    
+    watermark_file.set(preset.get("watermark_file", defaultpreset.get("watermark_file")))
+    watermark_size.set(preset.get("watermark_size", defaultpreset.get("watermark_size")))
+    watermark_toggle.set(preset.get("watermark_toggle", defaultpreset.get("watermark_toggle")))
+    watermark_blending.set(preset.get("watermark_blending", defaultpreset.get("watermark_blending")))
 
 tab_notebook = ttk.Notebook(root)
 main_tab = ttk.Frame(tab_notebook) 
@@ -150,7 +163,8 @@ layout = {
         (ttk.Label(watermark_tab, text="Watermark settings"), 0, 0, 2, 1),
         (ttk.Label(watermark_tab, text="Toggle watermark"), 0, 1, 1, 1),
         (ttk.Label(watermark_tab, text="Watermark image:"), 0, 2, 1, 1),
-        (ttk.Label(watermark_tab, text="Watermark blending mode:"), 0, 3, 1, 1)
+        (ttk.Label(watermark_tab, text="Watermark size (0-1):"), 0, 3, 1, 1),
+        (ttk.Label(watermark_tab, text="Watermark blending mode:"), 0, 4, 1, 1)
     ],
     "render": [
         # Import/export
@@ -177,7 +191,8 @@ layout = {
         # Watermark
         (Checkbox(watermark_tab, ontext="Enabled", offtext="Disabled", variable=watermark_toggle), 1, 1, 1, 1),
         (OpenFileMenu(watermark_tab, text="Select watermark...", variable=watermark_file, filetypes=[DialogFiletypes.png], initialdir='/files'), 1, 2, 1, 1),
-        (ttk.OptionMenu(watermark_tab, watermark_blending, "Select blending mode...", *BlendingModes.keys()), 1, 3, 1, 1),
+        (ttk.Entry(watermark_tab, textvariable=watermark_size, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
+        (ttk.OptionMenu(watermark_tab, watermark_blending, "Select blending mode...", *BlendingModes.keys()), 1, 4, 1, 1),
     ]
 }
 
@@ -210,6 +225,8 @@ for category, elements in layout.items():
 # Control widgets
 continue_button = ttk.Button(root, text="Render")
 initialize_widget(continue_button, 2, max_row + 0, category="controls")
+preview_button = ttk.Button(root, text="Preview")
+initialize_widget(preview_button, 3, max_row + 0, category="controls")
 progress_bar = ttk.Progressbar(root, orient="horizontal", mode="determinate", maximum=1)
 initialize_widget(progress_bar, 0, max_row + 1, 2, 3, 'ew', category="controls")
 progress_label = ttk.Label(root, text="Ready")
