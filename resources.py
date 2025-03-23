@@ -10,10 +10,10 @@ class DialogFiletypes():
     mp4 = ('MPEG-4 video file', '*.mp4')
     
 BlendingModes = {
-    "Brighten": ImageChops.add,
-    "Brighten (unclipped)": ImageChops.add_modulo,
-    "Darken": ImageChops.subtract,
-    "Darken (unclipped)": ImageChops.subtract_modulo
+    "Additive": ImageChops.add,
+    "Additive (unclipped)": ImageChops.add_modulo,
+    "Subtractive": ImageChops.subtract,
+    "Subtractive (unclipped)": ImageChops.subtract_modulo
 }
 
 # General functions

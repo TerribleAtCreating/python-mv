@@ -125,36 +125,59 @@ widget_list = dict()
 
 # Layout definition: [(Element, X, Y, Widthspan, Heightspan)]
 layout = {
+    "label": [
+        (ttk.Label(main_tab, text="Import/export settings"), 0, 0, 2, 1),
+        (ttk.Label(main_tab, text="Input file (.wav):"), 0, 1, 1, 1),
+        (ttk.Label(main_tab, text="Export filename:"), 0, 2, 1, 1),
+        (ttk.Label(main_tab, text="Channel panning:"), 0, 3, 1, 1),
+        
+        (ttk.Label(main_tab, text="Render settings"), 2, 0, 2, 1),
+        (ttk.Label(main_tab, text="Video framerate:"), 2, 1, 1, 1),
+        (ttk.Label(main_tab, text="Number of frequency bars to render:"), 2, 2, 1, 1),
+        (ttk.Label(main_tab, text="Bar spacing (px):"), 2, 3, 1, 1),
+        (ttk.Label(main_tab, text="Inbetween interpolation alpha:"), 2, 4, 1, 1),
+        (ttk.Label(main_tab, text="Interpolation rate:"), 2, 5, 1, 1), 
+        (ttk.Label(main_tab, text="Background image file:"), 2, 6, 1, 1),
+        
+        (ttk.Label(bar_tab, text="Bar customization"), 0, 0, 2, 1),
+        (ttk.Label(bar_tab, text="Screen coverage width:"), 0, 1, 1, 1),
+        (ttk.Label(bar_tab, text="Screen coverage height:"), 0, 2, 1, 1),
+        (ttk.Label(bar_tab, text="Horizontal justification (left-right):"), 0, 3, 1, 1),
+        (ttk.Label(bar_tab, text="Vertical justification (top-bottom):"), 0, 4, 1, 1),
+        (ttk.Label(bar_tab, text="Brightness exponent:"), 0, 5, 1, 1),
+        (ttk.Label(bar_tab, text="Height exponent:"), 0, 6, 1, 1),
+        
+        (ttk.Label(watermark_tab, text="Watermark settings"), 0, 0, 2, 1),
+        (ttk.Label(watermark_tab, text="Toggle watermark"), 0, 1, 1, 1),
+        (ttk.Label(watermark_tab, text="Watermark image:"), 0, 2, 1, 1),
+        (ttk.Label(watermark_tab, text="Watermark blending mode:"), 0, 3, 1, 1)
+    ],
     "render": [
         # Import/export
-        (ttk.Label(main_tab, text="Import/export settings"), 0, 0, 2, 1),
-        (ttk.Label(main_tab, text="Input file (.wav):"), 0, 1, 1, 1), (OpenFileMenu(main_tab, text="Select audio...", variable=input_file, filetypes=[DialogFiletypes.wav], initialdir='/files'), 1, 1, 1, 1),
-        (ttk.Label(main_tab, text="Export filename:"), 0, 2, 1, 1), (SaveFileMenu(main_tab, text="Select filename...", variable=export_file, filetypes=[DialogFiletypes.mp4], initialdir='/export'), 1, 2, 1, 1),
-        (ttk.Label(main_tab, text="Channel panning:"), 0, 3, 1, 1), (ttk.Entry(main_tab, textvariable=channel_pan, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
+        (OpenFileMenu(main_tab, text="Select audio...", variable=input_file, filetypes=[DialogFiletypes.wav], initialdir='/files'), 1, 1, 1, 1),
+        (SaveFileMenu(main_tab, text="Select filename...", variable=export_file, filetypes=[DialogFiletypes.mp4], initialdir='/export'), 1, 2, 1, 1),
+        (ttk.Entry(main_tab, textvariable=channel_pan, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
 
         # Render settings
-        (ttk.Label(main_tab, text="Render settings"), 2, 0, 2, 1),
-        (ttk.Label(main_tab, text="Video framerate:"), 2, 1, 1, 1), (ttk.Entry(main_tab, textvariable=framerate, validate='key', validatecommand=check_num_wrapper), 3, 1, 1, 1),
-        (ttk.Label(main_tab, text="Number of frequency bars to render:"), 2, 2, 1, 1), (ttk.Entry(main_tab, textvariable=bars, validate='key', validatecommand=check_num_wrapper), 3, 2, 1, 1),
-        (ttk.Label(main_tab, text="Bar spacing (px):"), 2, 3, 1, 1), (ttk.Entry(main_tab, textvariable=bar_spacing, validate='key', validatecommand=check_num_wrapper), 3, 3, 1, 1),
-        (ttk.Label(main_tab, text="Inbetween interpolation alpha:"), 2, 4, 1, 1), (ttk.Entry(main_tab, textvariable=lerp_alpha, validate='key', validatecommand=check_float_wrapper), 3, 4, 1, 1),
-        (ttk.Label(main_tab, text="Interpolation rate:"), 2, 5, 1, 1), (ttk.Entry(main_tab, textvariable=lerp_speed, validate='key', validatecommand=check_float_wrapper), 3, 5, 1, 1),
-        (ttk.Label(main_tab, text="Background image file:"), 2, 6, 1, 1), (OpenFileMenu(main_tab, text="Select background...", variable=background, filetypes=[DialogFiletypes.png], initialdir='/files'), 3, 6, 1, 1),
+        (ttk.Entry(main_tab, textvariable=framerate, validate='key', validatecommand=check_num_wrapper), 3, 1, 1, 1),
+        (ttk.Entry(main_tab, textvariable=bars, validate='key', validatecommand=check_num_wrapper), 3, 2, 1, 1),
+        (ttk.Entry(main_tab, textvariable=bar_spacing, validate='key', validatecommand=check_num_wrapper), 3, 3, 1, 1),
+        (ttk.Entry(main_tab, textvariable=lerp_alpha, validate='key', validatecommand=check_float_wrapper), 3, 4, 1, 1),
+        (ttk.Entry(main_tab, textvariable=lerp_speed, validate='key', validatecommand=check_float_wrapper), 3, 5, 1, 1),
+        (OpenFileMenu(main_tab, text="Select background...", variable=background, filetypes=[DialogFiletypes.png], initialdir='/files'), 3, 6, 1, 1),
     
         # Graphics settings
-        (ttk.Label(bar_tab, text="Bar customization"), 0, 0, 2, 1),
-        (ttk.Label(bar_tab, text="Screen coverage width:"), 0, 1, 1, 1), (ttk.Entry(bar_tab, textvariable=coverage_x, validate='key', validatecommand=check_float_wrapper), 1, 1, 1, 1),
-        (ttk.Label(bar_tab, text="Screen coverage height:"), 0, 2, 1, 1), (ttk.Entry(bar_tab, textvariable=coverage_y, validate='key', validatecommand=check_float_wrapper), 1, 2, 1, 1),
-        (ttk.Label(bar_tab, text="Horizontal justification (left-right):"), 0, 3, 1, 1), (ttk.Entry(bar_tab, textvariable=bar_justify_x, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
-        (ttk.Label(bar_tab, text="Vertical justification (top-bottom):"), 0, 4, 1, 1), (ttk.Entry(bar_tab, textvariable=bar_justify_y, validate='key', validatecommand=check_float_wrapper), 1, 4, 1, 1),
-        (ttk.Label(bar_tab, text="Brightness exponent:"), 0, 5, 1, 1), (ttk.Entry(bar_tab, textvariable=brightness_exp, validate='key', validatecommand=check_float_wrapper), 1, 5, 1, 1),
-        (ttk.Label(bar_tab, text="Height exponent:"), 0, 6, 1, 1), (ttk.Entry(bar_tab, textvariable=height_exp, validate='key', validatecommand=check_float_wrapper), 1, 6, 1, 1),
+        (ttk.Entry(bar_tab, textvariable=coverage_x, validate='key', validatecommand=check_float_wrapper), 1, 1, 1, 1),
+        (ttk.Entry(bar_tab, textvariable=coverage_y, validate='key', validatecommand=check_float_wrapper), 1, 2, 1, 1),
+        (ttk.Entry(bar_tab, textvariable=bar_justify_x, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
+        (ttk.Entry(bar_tab, textvariable=bar_justify_y, validate='key', validatecommand=check_float_wrapper), 1, 4, 1, 1),
+        (ttk.Entry(bar_tab, textvariable=brightness_exp, validate='key', validatecommand=check_float_wrapper), 1, 5, 1, 1),
+        (ttk.Entry(bar_tab, textvariable=height_exp, validate='key', validatecommand=check_float_wrapper), 1, 6, 1, 1),
     
         # Watermark
-        (ttk.Label(watermark_tab, text="Watermark settings"), 0, 0, 2, 1),
-        (ttk.Label(watermark_tab, text="Toggle watermark"), 0, 1, 1, 1), (Checkbox(watermark_tab, ontext="Enabled", offtext="Disabled", variable=watermark_toggle), 1, 1, 1, 1),
-        (ttk.Label(watermark_tab, text="Watermark image:"), 0, 2, 1, 1), (OpenFileMenu(watermark_tab, text="Select watermark...", variable=watermark_file, filetypes=[DialogFiletypes.png], initialdir='/files'), 1, 2, 1, 1),
-        (ttk.Label(watermark_tab, text="Watermark blending mode:"), 0, 3, 1, 1), (ttk.OptionMenu(watermark_tab, watermark_blending, "Select blending mode...", *BlendingModes.keys()), 1, 3, 1, 1),
+        (Checkbox(watermark_tab, ontext="Enabled", offtext="Disabled", variable=watermark_toggle), 1, 1, 1, 1),
+        (OpenFileMenu(watermark_tab, text="Select watermark...", variable=watermark_file, filetypes=[DialogFiletypes.png], initialdir='/files'), 1, 2, 1, 1),
+        (ttk.OptionMenu(watermark_tab, watermark_blending, "Select blending mode...", *BlendingModes.keys()), 1, 3, 1, 1),
     ]
 }
 
