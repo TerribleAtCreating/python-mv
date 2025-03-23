@@ -18,8 +18,8 @@ import re
 
 import wave
 
-from tkinter import *
-import tkinter.ttk as tkinter
+import tkinter as tk
+import tkinter.ttk as ttk
 
 import os
 import ctypes

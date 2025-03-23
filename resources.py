@@ -33,31 +33,31 @@ def check_float(newval):
 
 # UI classes
 def save_filename(filetypes, initialdir, formatInitial = False):
-    filename = tkinter.filedialog.asksaveasfilename(filetypes=filetypes, defaultextension=filetypes, initialdir=os.curdir+initialdir)
+    filename = ttk.filedialog.asksaveasfilename(filetypes=filetypes, defaultextension=filetypes, initialdir=os.curdir+initialdir)
     if not filename: return ''
     return format_path(filename, initialdir if formatInitial else '')
 def open_filename(filetypes, initialdir, formatInitial = False):
-    filename = tkinter.filedialog.askopenfilename(filetypes=filetypes, defaultextension=filetypes, initialdir=os.curdir+initialdir)
+    filename = ttk.filedialog.askopenfilename(filetypes=filetypes, defaultextension=filetypes, initialdir=os.curdir+initialdir)
     if not filename: return ''
     return format_path(filename, initialdir if formatInitial else '')
 
-class OpenFileMenu(tkinter.Button):
-    def __init__(self, *args, filetypes, initialdir, variable: StringVar, **kwargs):
+class OpenFileMenu(ttk.Button):
+    def __init__(self, *args, filetypes, initialdir, variable: tk.StringVar, **kwargs):
         super().__init__(*args, command=lambda:
             multiple_function(
                 lambda: variable.set(open_filename(filetypes, initialdir, True)),
                 lambda: self.configure(text=variable.get() != '' and variable.get() or "No file selected")
             ), **kwargs)
         
-class SaveFileMenu(tkinter.Button):
-    def __init__(self, *args, filetypes, initialdir, variable: StringVar, **kwargs):
+class SaveFileMenu(ttk.Button):
+    def __init__(self, *args, filetypes, initialdir, variable: tk.StringVar, **kwargs):
         super().__init__(*args, command=lambda: multiple_function(
                 lambda: variable.set(save_filename(filetypes, initialdir, True)),
                 lambda: self.configure(text=variable.get() != '' and variable.get() or "No file selected")
             ), **kwargs)
         
-class Checkbox(tkinter.Checkbutton):
-    def __init__(self, *args, ontext=str(True), offtext=str(False), variable: BooleanVar, **kwargs):
+class Checkbox(ttk.Checkbutton):
+    def __init__(self, *args, ontext=str(True), offtext=str(False), variable: tk.BooleanVar, **kwargs):
         button_command = lambda: self.configure(text=variable.get() and ontext or offtext)
         super().__init__(*args, variable=variable, command=button_command, onvalue=True, offvalue=False, **kwargs)
         button_command()

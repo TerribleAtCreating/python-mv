@@ -33,7 +33,7 @@ def render():
         assert_empty(_background, "Background filename")
     except ValueError as error:
         interrupted = "Some provided render settings are invalid. Please double check that all render settings are filled, and check the output for details.\nif all settings were filled, please report this as an issue."
-        tkinter.messagebox.showerror("Render settings invalidated", interrupted)
+        ttk.messagebox.showerror("Render settings invalidated", interrupted)
         print("Render settings invalidated:", error)
         return
 
@@ -129,7 +129,7 @@ def render():
                 complete.set()
         except Exception as error:
             nonlocal interrupted; interrupted = "A problem occured, please check the output for errors."
-            tkinter.messagebox.showerror("Render interrupted", interrupted)
+            ttk.messagebox.showerror("Render interrupted", interrupted)
             print("Exception was caught:", error)
     
     continue_button.configure(text='Cancel', command=interrupt)
