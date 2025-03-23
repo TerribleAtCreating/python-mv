@@ -154,7 +154,7 @@ layout = {
         (ttk.Label(watermark_tab, text="Watermark settings"), 0, 0, 2, 1),
         (ttk.Label(watermark_tab, text="Toggle watermark"), 0, 1, 1, 1), (Checkbox(watermark_tab, ontext="Enabled", offtext="Disabled", variable=watermark_toggle), 1, 1, 1, 1),
         (ttk.Label(watermark_tab, text="Watermark image:"), 0, 2, 1, 1), (OpenFileMenu(watermark_tab, text="Select watermark...", variable=watermark_file, filetypes=[DialogFiletypes.png], initialdir='/files'), 1, 2, 1, 1),
-        (ttk.Label(watermark_tab, text="Watermark blending mode:"), 0, 3, 1, 1), (ttk.OptionMenu(watermark_tab, watermark_blending, *BlendingModes.keys()), 1, 3, 1, 1),
+        (ttk.Label(watermark_tab, text="Watermark blending mode:"), 0, 3, 1, 1), (ttk.OptionMenu(watermark_tab, watermark_blending, "Select blending mode...", *BlendingModes.keys()), 1, 3, 1, 1),
     ]
 }
 

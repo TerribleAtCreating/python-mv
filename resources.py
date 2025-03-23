@@ -33,11 +33,11 @@ def check_float(newval):
 
 # UI classes
 def save_filename(filetypes, initialdir, formatInitial = False):
-    filename = ttk.filedialog.asksaveasfilename(filetypes=filetypes, defaultextension=filetypes, initialdir=os.curdir+initialdir)
+    filename = tk.filedialog.asksaveasfilename(filetypes=filetypes, defaultextension=filetypes, initialdir=os.curdir+initialdir)
     if not filename: return ''
     return format_path(filename, initialdir if formatInitial else '')
 def open_filename(filetypes, initialdir, formatInitial = False):
-    filename = ttk.filedialog.askopenfilename(filetypes=filetypes, defaultextension=filetypes, initialdir=os.curdir+initialdir)
+    filename = tk.filedialog.askopenfilename(filetypes=filetypes, defaultextension=filetypes, initialdir=os.curdir+initialdir)
     if not filename: return ''
     return format_path(filename, initialdir if formatInitial else '')
 
