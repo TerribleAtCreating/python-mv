@@ -234,3 +234,7 @@ def check_version():
 def launch_ui():
     threading.Thread(target=check_version).start()
     root.mainloop()
+    
+def set_ui_state(newstate='normal'):
+    for widget in widget_list['render']:
+        widget.configure(state=newstate)
