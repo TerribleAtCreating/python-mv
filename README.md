@@ -2,8 +2,8 @@
 A small Python script for rendering music videos with FFmpeg.
 ## Module dependencies
 ### FFmpeg
-This script relies heavily on the FFmpeg library.
-You can install it at https://www.ffmpeg.org/. Install it by adding it to your PATH values, and you're good to go!
+This script relies heavily on the **FFmpeg library**.
+You can install it at https://www.ffmpeg.org/. Install it by adding the executable to your PATH values, and you're good to go!
 
 ### Python-specific modules
 - [ffmpeg-python](https://github.com/kkroening/ffmpeg-python)
@@ -22,20 +22,20 @@ It basically takes in audio, and gives you a video with all the visuals you woul
 
 ### How do I use this?
 - Install the release zip file and extract it.
-- The "presets" folder is where your render settings (excluding audio and output names) are saved.
-- The "files" folder is where you'll put your .wav and .png files for rendering.
-- The "export" folder is where videos are rendered and saved.
+- The "presets" folder is where your **render settings** (excluding audio and output names) are saved.
+- The "files" folder is where you'll put your **input files** for rendering.
+- The "export" folder is where **videos are rendered and saved**.
 
-Your background image should be 1920x1080 or any downscale of it for that sweet 16:9 ratio.
+Your background image should be *1920x1080 or any variation* of it for that sweet 16:9 ratio.
 - Open the python script using the "start.bat" file or via IDE
-    - When asked for a file name, you must include the extension.
 
-- Tip: Use "greenscreen.png" as the background image so that you can later edit it in as an overlay in a video editor
-  - You can also use "redscreen.png" or "bluescreen.png" if your editor allows for those effects
-  - You can also use "blackscreen.png" if your editor allows for color cutouts
+### Tips
+- Use `greenscreen.png` as the background image so that you can later edit it in as an **overlay in a video editor**
+  - You can also use `redscreen.png` or `bluescreen.png` if your editor allows for those effects
+  - You can also use `blackscreen.png` if your editor allows for color cutouts
   - Don't make a correct "whitescreen.png" file (because why would you do that it's going to blend in with the cool bars i gave you)
 
-- Tip: Use the "quick" preset to render videos with the settings I use, aka the settings you may have seen on some of my showcases
+- Use **the "quick" preset** to render videos with **the settings I use**, aka the settings you may have **seen on some of my showcases**
   - (almost) equivalent to the preloaded settings
 
 The bar fill color will be white and varies based off its relative height and the settings in use.
