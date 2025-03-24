@@ -9,9 +9,18 @@ root.title(f"Python-MV [{currentVersion}]")
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
 root.iconphoto(True, tk.PhotoImage(file="pymv.png"))
 
-input_file = tk.StringVar()
-export_file = tk.StringVar()
-channel_pan = tk.StringVar()
+"""
+justify_horizontal = [
+"Left",
+"Center",
+"Right"
+]
+justify_vertical = [
+"Top",
+"Center",
+"Bottom"
+]
+"""
 
 defaultpreset = {
     "channel_pan": .5,
@@ -30,40 +39,59 @@ defaultpreset = {
     "watermark_toggle": False,
     "watermark_blending": "Additive"
 }
-"""
-justify_horizontal = [
-"Left",
-"Center",
-"Right"
-]
-justify_vertical = [
-"Top",
-"Center",
-"Bottom"
-]
-"""
 
-# Tk variables
-channel_pan = tk.StringVar(value=defaultpreset.get("channel_pan"))
+session_variables = {
+    "input_file": tk.StringVar(root),
+    "export_file": tk.StringVar(root)
+}
 
-framerate = tk.StringVar(value=defaultpreset.get("framerate"))
-bars = tk.StringVar(value=defaultpreset.get("bars"))
-bar_spacing = tk.StringVar(value=defaultpreset.get("bar_spacing"))
-lerp_alpha = tk.StringVar(value=defaultpreset.get("lerp_alpha"))
-lerp_speed = tk.StringVar(value=defaultpreset.get("lerp_speed"))
-background = tk.StringVar(value=defaultpreset.get("background"))
+preset_variables = {
+    "channel_pan": tk.StringVar(root),
 
-coverage_x = tk.StringVar(value=defaultpreset.get("coverage_x"))
-coverage_y = tk.StringVar(value=defaultpreset.get("coverage_y"))
-bar_justify_x = tk.StringVar(value=defaultpreset.get("bar_justify_x"))
-bar_justify_y = tk.StringVar(value=defaultpreset.get("bar_justify_y"))
-brightness_exp = tk.StringVar(value=defaultpreset.get("brightness_exp"))
-height_exp = tk.StringVar(value=defaultpreset.get("height_exp"))
+    "framerate": tk.IntVar(root),
+    "bars": tk.IntVar(root),
+    "bar_spacing": tk.IntVar(root),
+    "lerp_alpha": tk.DoubleVar(root),
+    "lerp_speed": tk.DoubleVar(root),
+    "background": tk.StringVar(root),
 
-watermark_file = tk.StringVar(value=defaultpreset.get("watermark_file"))
-watermark_size = tk.StringVar(value=defaultpreset.get("watermark_size"))
-watermark_toggle = tk.BooleanVar(value=defaultpreset.get("watermark_toggle"))
-watermark_blending = tk.StringVar(value=defaultpreset.get("watermark_blending"))
+    "coverage_x": tk.DoubleVar(root),
+    "coverage_y": tk.DoubleVar(root),
+    "bar_justify_x": tk.DoubleVar(root),
+    "bar_justify_y": tk.DoubleVar(root),
+    "brightness_exp": tk.DoubleVar(root),
+    "height_exp": tk.DoubleVar(root),
+
+    "watermark_file": tk.StringVar(root),
+    "watermark_size": tk.DoubleVar(root),
+    "watermark_toggle": tk.BooleanVar(root),
+    "watermark_blending": tk.StringVar(root)
+}
+
+for name, value in defaultpreset.items():
+    if name in session_variables:
+        session_variables[name].set(value)
+    if name in preset_variables:
+        preset_variables[name].set(value)
+        
+# User variable functions
+def get_variable(name):
+    if name in session_variables:
+        return session_variables[name]
+    if name in preset_variables:
+        return preset_variables[name]
+    
+    print(f"Provided variable name {name} is invalid.")
+    
+def get_value(name):
+    variable = get_variable(name)
+    if variable:
+        return variable.get()
+
+def set_variable(name, value):
+    variable = get_variable(name)
+    if variable:
+        return variable.set(value)
 
 check_num_wrapper = (root.register(check_num), '%P')
 check_float_wrapper = (root.register(check_float), '%P')
@@ -73,28 +101,10 @@ def save_preset():
     presetpath = save_filename([DialogFiletypes.jsonPreset], '/presets')
     if not presetpath: return
     with open(presetpath, 'w') as jsonoutput:
-        json.dump({
-            "channelpan": float(channel_pan.get()),
-            
-            "framerate": int(framerate.get()),
-            "bars": int(bars.get()),
-            "bar_spacing": int(bar_spacing.get()),
-            "lerp_alpha": float(lerp_alpha.get()),
-            "lerp_speed": float(lerp_speed.get()),
-            "background": background.get(),
-            
-            "coverage_x": float(coverage_x.get()),
-            "coverage_y": float(coverage_y.get()),
-            "bar_justify_x": float(bar_justify_x.get()),
-            "bar_justify_y": float(bar_justify_y.get()),
-            "brightness_exp": float(brightness_exp.get()),
-            "height_exp": float(height_exp.get()),
-            
-            "watermark_file": watermark_file.get(),
-            "watermark_size": float(watermark_size.get()),
-            "watermark_toggle": watermark_toggle.get(),
-            "watermark_blending": watermark_blending.get()
-            }, jsonoutput)
+        preset_json = {}
+        for name, variable in preset_variables.items():
+            preset_json[name] = variable.get()
+        json.dump(preset_json, jsonoutput)
 def load_preset():
     presetpath = open_filename([DialogFiletypes.jsonPreset], '/presets')
     if not presetpath: return
@@ -103,26 +113,8 @@ def load_preset():
         return
     preset: dict = json.load(open(presetpath))
     
-    channel_pan.set(preset.get("channel_pan", defaultpreset.get("channel_pan")))
-    
-    framerate.set(preset.get("framerate", defaultpreset.get("framerate")))
-    bars.set(preset.get("bars", defaultpreset.get("bars")))
-    bar_spacing.set(preset.get("bar_spacing", defaultpreset.get("bar_spacing")))
-    lerp_alpha.set(preset.get("lerp_alpha", defaultpreset.get("lerp_alpha")))
-    lerp_speed.set(preset.get("lerp_speed", defaultpreset.get("lerp_speed")))
-    background.set(preset.get("background", defaultpreset.get("background")))
-    
-    coverage_x.set(preset.get("coverage_x", defaultpreset.get("coverage_x")))
-    coverage_y.set(preset.get("coverage_y", defaultpreset.get("coverage_y")))
-    bar_justify_x.set(preset.get("bar_justify_x", defaultpreset.get("bar_justify_x")))
-    bar_justify_y.set(preset.get("bar_justify_y", defaultpreset.get("bar_justify_y")))
-    brightness_exp.set(preset.get("brightness_exp", defaultpreset.get("brightness_exp")))
-    height_exp.set(preset.get("height_exp", defaultpreset.get("height_exp")))
-    
-    watermark_file.set(preset.get("watermark_file", defaultpreset.get("watermark_file")))
-    watermark_size.set(preset.get("watermark_size", defaultpreset.get("watermark_size")))
-    watermark_toggle.set(preset.get("watermark_toggle", defaultpreset.get("watermark_toggle")))
-    watermark_blending.set(preset.get("watermark_blending", defaultpreset.get("watermark_blending")))
+    for name, value in preset.items():
+        set_variable(name, value)
 
 tab_notebook = ttk.Notebook(root)
 main_tab = ttk.Frame(tab_notebook) 
@@ -168,31 +160,31 @@ layout = {
     ],
     "render": [
         # Import/export
-        (OpenFileMenu(main_tab, text="Select audio...", variable=input_file, filetypes=[DialogFiletypes.wav], initialdir='/files'), 1, 1, 1, 1),
-        (SaveFileMenu(main_tab, text="Select filename...", variable=export_file, filetypes=[DialogFiletypes.mp4], initialdir='/export'), 1, 2, 1, 1),
-        (ttk.Entry(main_tab, textvariable=channel_pan, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
+        (OpenFileMenu(main_tab, text="Select audio...", variable=get_variable("input_file"), filetypes=[DialogFiletypes.wav], initialdir='/files'), 1, 1, 1, 1),
+        (SaveFileMenu(main_tab, text="Select filename...", variable=get_variable("export_file"), filetypes=[DialogFiletypes.mp4], initialdir='/export'), 1, 2, 1, 1),
+        (ttk.Entry(main_tab, textvariable=get_variable("channel_pan"), validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
 
         # Render settings
-        (ttk.Entry(main_tab, textvariable=framerate, validate='key', validatecommand=check_num_wrapper), 3, 1, 1, 1),
-        (ttk.Entry(main_tab, textvariable=bars, validate='key', validatecommand=check_num_wrapper), 3, 2, 1, 1),
-        (ttk.Entry(main_tab, textvariable=bar_spacing, validate='key', validatecommand=check_num_wrapper), 3, 3, 1, 1),
-        (ttk.Entry(main_tab, textvariable=lerp_alpha, validate='key', validatecommand=check_float_wrapper), 3, 4, 1, 1),
-        (ttk.Entry(main_tab, textvariable=lerp_speed, validate='key', validatecommand=check_float_wrapper), 3, 5, 1, 1),
-        (OpenFileMenu(main_tab, text="Select background...", variable=background, filetypes=[DialogFiletypes.png], initialdir='/files'), 3, 6, 1, 1),
+        (ttk.Entry(main_tab, textvariable=get_variable("framerate"), validate='key', validatecommand=check_num_wrapper), 3, 1, 1, 1),
+        (ttk.Entry(main_tab, textvariable=get_variable("bars"), validate='key', validatecommand=check_num_wrapper), 3, 2, 1, 1),
+        (ttk.Entry(main_tab, textvariable=get_variable("bar_spacing"), validate='key', validatecommand=check_num_wrapper), 3, 3, 1, 1),
+        (ttk.Entry(main_tab, textvariable=get_variable("lerp_alpha"), validate='key', validatecommand=check_float_wrapper), 3, 4, 1, 1),
+        (ttk.Entry(main_tab, textvariable=get_variable("lerp_speed"), validate='key', validatecommand=check_float_wrapper), 3, 5, 1, 1),
+        (OpenFileMenu(main_tab, text="Select background...", variable=get_variable("background"), filetypes=[DialogFiletypes.png], initialdir='/files'), 3, 6, 1, 1),
     
         # Graphics settings
-        (ttk.Entry(bar_tab, textvariable=coverage_x, validate='key', validatecommand=check_float_wrapper), 1, 1, 1, 1),
-        (ttk.Entry(bar_tab, textvariable=coverage_y, validate='key', validatecommand=check_float_wrapper), 1, 2, 1, 1),
-        (ttk.Entry(bar_tab, textvariable=bar_justify_x, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
-        (ttk.Entry(bar_tab, textvariable=bar_justify_y, validate='key', validatecommand=check_float_wrapper), 1, 4, 1, 1),
-        (ttk.Entry(bar_tab, textvariable=brightness_exp, validate='key', validatecommand=check_float_wrapper), 1, 5, 1, 1),
-        (ttk.Entry(bar_tab, textvariable=height_exp, validate='key', validatecommand=check_float_wrapper), 1, 6, 1, 1),
+        (ttk.Entry(bar_tab, textvariable=get_variable("coverage_x"), validate='key', validatecommand=check_float_wrapper), 1, 1, 1, 1),
+        (ttk.Entry(bar_tab, textvariable=get_variable("coverage_y"), validate='key', validatecommand=check_float_wrapper), 1, 2, 1, 1),
+        (ttk.Entry(bar_tab, textvariable=get_variable("bar_justify_x"), validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
+        (ttk.Entry(bar_tab, textvariable=get_variable("bar_justify_y"), validate='key', validatecommand=check_float_wrapper), 1, 4, 1, 1),
+        (ttk.Entry(bar_tab, textvariable=get_variable("brightness_exp"), validate='key', validatecommand=check_float_wrapper), 1, 5, 1, 1),
+        (ttk.Entry(bar_tab, textvariable=get_variable("height_exp"), validate='key', validatecommand=check_float_wrapper), 1, 6, 1, 1),
     
         # Watermark
-        (Checkbox(watermark_tab, ontext="Enabled", offtext="Disabled", variable=watermark_toggle), 1, 1, 1, 1),
-        (OpenFileMenu(watermark_tab, text="Select watermark...", variable=watermark_file, filetypes=[DialogFiletypes.png], initialdir='/files'), 1, 2, 1, 1),
-        (ttk.Entry(watermark_tab, textvariable=watermark_size, validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
-        (ttk.OptionMenu(watermark_tab, watermark_blending, "Select blending mode...", *BlendingModes.keys()), 1, 4, 1, 1),
+        (Checkbox(watermark_tab, ontext="Enabled", offtext="Disabled", variable=get_variable("watermark_toggle")), 1, 1, 1, 1),
+        (OpenFileMenu(watermark_tab, text="Select watermark...", variable=get_variable("watermark_file"), filetypes=[DialogFiletypes.png], initialdir='/files'), 1, 2, 1, 1),
+        (ttk.Entry(watermark_tab, textvariable=get_variable("watermark_size"), validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
+        (ttk.OptionMenu(watermark_tab, get_variable("watermark_blending"), "Select blending mode...", *BlendingModes.keys()), 1, 4, 1, 1),
     ]
 }
 
