@@ -15,6 +15,14 @@ BlendingModes = {
     "Subtractive": ImageChops.subtract,
     "Subtractive (unclipped)": ImageChops.subtract_modulo
 }
+ResolutionUpscale = {
+    "No upscale": 0,
+    "720p (SD)": 720,
+    "1080p (HD)": 1080,
+    "1440p (QHD)": 1440,
+    "2160p (UHD - 4K)": 2160,
+    "4320p (UHD - 8K)": 4320
+}
 
 # Formatting and typechecking functions
 def assert_empty(text, context):

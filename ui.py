@@ -22,7 +22,8 @@ justify_vertical = [
 ]
 """
 
-defaultpreset = {
+default_values = {
+    "video_upscale": 0,
     "channel_pan": .5,
     "framerate": 30,
     "bars": 25,
@@ -42,11 +43,12 @@ defaultpreset = {
 
 session_variables = {
     "input_file": tk.StringVar(root),
-    "export_file": tk.StringVar(root)
+    "export_file": tk.StringVar(root),
+    "video_upscale": tk.IntVar(root)
 }
 
 preset_variables = {
-    "channel_pan": tk.StringVar(root),
+    "channel_pan": tk.DoubleVar(root),
 
     "framerate": tk.IntVar(root),
     "bars": tk.IntVar(root),
@@ -68,7 +70,7 @@ preset_variables = {
     "watermark_blending": tk.StringVar(root)
 }
 
-for name, value in defaultpreset.items():
+for name, value in default_values.items():
     if name in session_variables:
         session_variables[name].set(value)
     if name in preset_variables:
@@ -135,6 +137,7 @@ layout = {
         (ttk.Label(main_tab, text="Input file (.wav):"), 0, 1, 1, 1),
         (ttk.Label(main_tab, text="Export filename:"), 0, 2, 1, 1),
         (ttk.Label(main_tab, text="Channel panning:"), 0, 3, 1, 1),
+        (ttk.Label(main_tab, text="Video upscale:"), 0, 4, 1, 1),
         
         (ttk.Label(main_tab, text="Render settings"), 2, 0, 2, 1),
         (ttk.Label(main_tab, text="Video framerate:"), 2, 1, 1, 1),
@@ -163,6 +166,7 @@ layout = {
         (OpenFileMenu(main_tab, text="Select audio...", variable=get_variable("input_file"), filetypes=[DialogFiletypes.wav], initialdir='/files'), 1, 1, 1, 1),
         (SaveFileMenu(main_tab, text="Select filename...", variable=get_variable("export_file"), filetypes=[DialogFiletypes.mp4], initialdir='/export'), 1, 2, 1, 1),
         (ttk.Entry(main_tab, textvariable=get_variable("channel_pan"), validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
+        (ttk.OptionMenu(main_tab, get_variable("video_upscale"), "Select upscale target...", *ResolutionUpscale.keys()), 1, 4, 1, 1),
 
         # Render settings
         (ttk.Entry(main_tab, textvariable=get_variable("framerate"), validate='key', validatecommand=check_num_wrapper), 3, 1, 1, 1),
@@ -220,9 +224,9 @@ initialize_widget(continue_button, 2, max_row + 0, category="controls")
 preview_button = ttk.Button(root, text="Preview")
 initialize_widget(preview_button, 3, max_row + 0, category="controls")
 progress_bar = ttk.Progressbar(root, orient="horizontal", mode="determinate", maximum=1)
-initialize_widget(progress_bar, 0, max_row + 1, 2, 3, 'ew', category="controls")
+initialize_widget(progress_bar, 0, max_row + 1, 4, 1, 'ew', category="controls")
 progress_label = ttk.Label(root, text="Ready")
-initialize_widget(progress_label, 2, max_row + 1, 3, 1, 'w', category="controls")
+initialize_widget(progress_label, 0, max_row + 2, 4, 1, 'w', category="controls")
 
 initialize_widget(ttk.Button(root, text="Save Preset", command=save_preset), 0, max_row + 0, 1, 1)
 initialize_widget(ttk.Button(root, text="Load Preset", command=load_preset), 1, max_row + 0, 1, 1)

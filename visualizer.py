@@ -39,7 +39,7 @@ def render(preview=False):
     # frame_length = time_length / frame_count: will be used later for timeline based effects
 
     bg_image: Image.Image = Image.open('files/' + get_value('background')).convert('RGB')
-    
+    bg_image = ImageOps.scale(max(bg_image.size, get_value('video_upscale')) / min(bg_image.size))
     bg_width, bg_height = bg_image.size
     
     if get_value('watermark_toggle'):
@@ -57,13 +57,23 @@ def render(preview=False):
     width_gap = 1 - float(get_value('coverage_x'))
     
     blender = BlendingModes[get_value('watermark_blending')]
+    
+    def status_text(frame_no):
+        render_speed = frame_count/total_elapsed/int(get_value('framerate'))
+        return f"""
+        ({total_elapsed:.1f}s), ETA: {(frame_count - frame_no) / render_speed:.1f}s - 
+        {frame_no}/{frame_count} - 
+        {frame_count/total_elapsed:.1f}/s - 
+        {render_speed:.3f}x render speed
+        """
+    
     def drawF(frame_no: int = 0):
         if interrupted or frame_no >= frame_count:
             return False
         
         elapsed = timeit.default_timer() - render_start
         if not preview:
-            progress_label.configure(text=f"Rendering... {elapsed:.1f}s elapsed - {frame_no}/{frame_count} - {frame_no/elapsed:.1f}/s - {frame_no/elapsed/get_value('framerate'):.3f}x render speed")
+            progress_label.configure(text="Rendering... " + status_text(frame_no))
             progress_bar['value'] = frame_no
         
         frame = bg_image.copy()  
@@ -137,7 +147,7 @@ def render(preview=False):
     if interrupted:
         progress_label.configure(text=interrupted)
     else:
-        progress_label.configure(text=f"Finished in {total_elapsed:.1f}s - {frame_count}/{frame_count} - {frame_count/total_elapsed:.1f}/s - {frame_count/total_elapsed/int(get_value('framerate')):.3f}x render speed")
+        progress_label.configure(text="Finished " + status_text(frame_count))
         
 continue_button.configure(command=lambda: Thread(target=render).start())
 preview_button.configure(command=lambda: Thread(target=render, args=[True]).start())
