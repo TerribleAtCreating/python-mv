@@ -173,7 +173,7 @@ layout = {
         (SaveFileMenu(main_tab, text="Select filename...", variable=get_variable("export_file"), filetypes=[DialogFiletypes.mp4], initialdir='/export'), 1, 2, 1, 1),
         (ttk.Entry(main_tab, textvariable=get_variable("channel_pan"), validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
         (ttk.OptionMenu(main_tab, get_variable("video_upscale"), "Select upscale target...", *ResolutionUpscale.keys()), 1, 4, 1, 1),
-        (Checkbox(watermark_tab, ontext="Vertical", offtext="Horizontal", variable=get_variable("bar_orientation")), 1, 5, 1, 1),
+        (Checkbox(main_tab, ontext="Vertical", offtext="Horizontal", variable=get_variable("bar_orientation")), 1, 5, 1, 1),
 
         # Render settings
         (ttk.Entry(main_tab, textvariable=get_variable("framerate"), validate='key', validatecommand=check_num_wrapper), 3, 1, 1, 1),
