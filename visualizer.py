@@ -57,7 +57,7 @@ def render(preview=False):
     previous_signals = [0] * get_value('bars')
     progress_bar.configure(maximum = frame_count - 1)
     complete = threading.Event()
-    width_gap = 1 - get_value('coverage_x')
+    thickness_gap = 1 - get_value('coverage_x')
     
     if get_value('watermark_toggle'): blender = BlendingModes[get_value('watermark_blending')]
     
@@ -93,18 +93,31 @@ def render(preview=False):
             else:
                 signal_fraction = signal / peak_signal
             
-            width = get_value('coverage_x') / get_value('bars')
-            height = get_value('coverage_y') * abs(math.pow(signal_fraction, get_value('height_exp')))
-            height_gap = 1 - height
+            bar_thickness = get_value('coverage_x') / get_value('bars')
+            bar_length = get_value('coverage_y') * abs(math.pow(signal_fraction, get_value('height_exp')))
+            length_gap = 1 - bar_length
             fill_brightness = int(255 * math.pow(signal_fraction, get_value('brightness_exp')))
             
-            draw.rectangle(
-                (
-                    (width_gap * get_value('bar_justify_x') + width * bar) * bg_width + math.floor(get_value('bar_spacing') / 2),
-                    (height_gap * get_value('bar_justify_y')) * bg_height,
-                    (width_gap * get_value('bar_justify_x') + width * (bar + 1)) * bg_width - math.ceil(get_value('bar_spacing') / 2),
-                    (height_gap * get_value('bar_justify_y') + height) * bg_height
-                ), fill = (fill_brightness, fill_brightness, fill_brightness))
+            spacing_half = get_value('bar_spacing') / 2
+            spacing_min, spacing_max = math.floor(spacing_half), math.ceil(spacing_half)
+            fill_color = (fill_brightness, fill_brightness, fill_brightness)
+            if get_value("bar_orientation"):
+                # Vertical orientation
+                bar_coordinates = [
+                    (length_gap * get_value('bar_justify_x')) * bg_width,
+                    (thickness_gap * get_value('bar_justify_y') + bar_thickness * bar) * bg_height + spacing_min,
+                    (length_gap * get_value('bar_justify_x') + bar_length) * bg_width
+                    (thickness_gap * get_value('bar_justify_y') + bar_thickness * (bar + 1)) * bg_height - spacing_max
+                ]
+            else:
+                # Horizontal orientation
+                bar_coordinates = [
+                    (thickness_gap * get_value('bar_justify_x') + bar_thickness * bar) * bg_width + spacing_min,
+                    (length_gap * get_value('bar_justify_y')) * bg_height,
+                    (thickness_gap * get_value('bar_justify_x') + bar_thickness * (bar + 1)) * bg_width - spacing_max,
+                    (length_gap * get_value('bar_justify_y') + bar_length) * bg_height
+                ]
+            draw.rectangle(*bar_coordinates, fill = fill_color)
         
         if get_value('watermark_toggle'): frame = blender(frame, resized_watermark)
         return frame

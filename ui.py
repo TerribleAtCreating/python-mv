@@ -25,7 +25,10 @@ justify_vertical = [
 
 default_values = {
     "video_upscale": 0,
+    
     "channel_pan": .5,
+    "bar_orientation": False,
+    
     "framerate": 30,
     "bars": 25,
     "bar_spacing": 5,
@@ -50,6 +53,7 @@ session_variables = {
 
 preset_variables = {
     "channel_pan": tk.DoubleVar(root),
+    "bar_orientation": tk.BooleanVar(root),
 
     "framerate": tk.IntVar(root),
     "bars": tk.IntVar(root),
@@ -139,6 +143,7 @@ layout = {
         (ttk.Label(main_tab, text="Export filename:"), 0, 2, 1, 1),
         (ttk.Label(main_tab, text="Channel panning:"), 0, 3, 1, 1),
         (ttk.Label(main_tab, text="Video upscale:"), 0, 4, 1, 1),
+        (ttk.Label(main_tab, text="Bar orientation"), 0, 5, 1, 1),
         
         (ttk.Label(main_tab, text="Render settings"), 2, 0, 2, 1),
         (ttk.Label(main_tab, text="Video framerate:"), 2, 1, 1, 1),
@@ -168,6 +173,7 @@ layout = {
         (SaveFileMenu(main_tab, text="Select filename...", variable=get_variable("export_file"), filetypes=[DialogFiletypes.mp4], initialdir='/export'), 1, 2, 1, 1),
         (ttk.Entry(main_tab, textvariable=get_variable("channel_pan"), validate='key', validatecommand=check_float_wrapper), 1, 3, 1, 1),
         (ttk.OptionMenu(main_tab, get_variable("video_upscale"), "Select upscale target...", *ResolutionUpscale.keys()), 1, 4, 1, 1),
+        (Checkbox(watermark_tab, ontext="Vertical", offtext="Horizontal", variable=get_variable("bar_orientation")), 1, 5, 1, 1),
 
         # Render settings
         (ttk.Entry(main_tab, textvariable=get_variable("framerate"), validate='key', validatecommand=check_num_wrapper), 3, 1, 1, 1),
