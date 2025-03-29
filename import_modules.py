@@ -23,6 +23,7 @@ import tkinter.ttk as ttk
 import tkinter.filedialog, tkinter.messagebox
 
 import os
+import traceback
 import ctypes
 import threading; from threading import Thread
 import timeit

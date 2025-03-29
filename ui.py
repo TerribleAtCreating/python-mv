@@ -1,11 +1,12 @@
 from import_modules import *
 from resources import *
 
-currentVersion = "0.4.0"
+currentVersion = "0.4.1"
+versionStatus = ", indev"
 app_id = u'terriac.pythonmv.main.040'
 root = tk.Tk()
 
-root.title(f"Python-MV [{currentVersion}]")
+root.title(f"Python-MV [{currentVersion + versionStatus}]")
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(app_id)
 root.iconphoto(True, tk.PhotoImage(file="pymv.png"))
 
@@ -44,7 +45,7 @@ default_values = {
 session_variables = {
     "input_file": tk.StringVar(root),
     "export_file": tk.StringVar(root),
-    "video_upscale": tk.IntVar(root)
+    "video_upscale": tk.StringVar(root)
 }
 
 preset_variables = {

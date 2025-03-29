@@ -69,4 +69,4 @@ class Checkbox(ttk.Checkbutton):
 def to_signal_scale(signal):
     if signal < 1:
         signal = 1
-    return 20 * math.log10(signal)
+    return math.log10(signal)
