@@ -6,6 +6,8 @@ This script relies heavily on the **FFmpeg library**.
 You can install it at https://www.ffmpeg.org/. Install it by adding the executable to your PATH values, and you're good to go!
 
 ### Python-specific modules
+- packaging (`pip install packaging`)
+- requests (`pip install requests`)
 - [ffmpeg-python](https://github.com/kkroening/ffmpeg-python)
 - [NumPy](https://numpy.org/)
 - [Pillow](https://python-pillow.org/)
