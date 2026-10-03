@@ -921,7 +921,7 @@ class QSld(QtWidgets.QSlider):
                 traceback.print_exc()
     def _update_from_var(self):
         try:
-            value = int(get_value(self._name))
+            value = int(get_value(self._name) or 0)
         except (TypeError, ValueError):
             value = 0
         if value != self.value():
@@ -980,7 +980,7 @@ class CanvasLabel(QLbl):
     def mousePressEvent(self, event):
         if event.button() == QtCore.Qt.MouseButton.LeftButton and self._draggable():
             self._drag_origin = event.position()
-            self._drag_start = (float(get_value('bar_position_x')), float(get_value('bar_position_y')))
+            self._drag_start = (float(get_value('bar_position_x') or 50.0), float(get_value('bar_position_y') or 50.0))
             self.setCursor(QtCore.Qt.CursorShape.ClosedHandCursor)
             event.accept()
             return
@@ -1215,7 +1215,7 @@ class GradientPicker(QtWidgets.QWidget):
             dist = abs(x - self._stop_x(stop[0]))
             if best_dist is None or dist < best_dist:
                 best, best_dist = index, dist
-        if best is not None and best_dist <= self.HIT:
+        if best_dist is not None and best_dist <= self.HIT:
             return best
         return None
 

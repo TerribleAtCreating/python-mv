@@ -64,7 +64,8 @@ DEFAULT_ENCODERS = {
 _preview_photo = None
 _preview_image = None
 _preview_after_id = None
-_preview_cache = {'key': None, 'ctx': None}
+_preview_cache_key = None
+_preview_cache_ctx = None
 
 
 def _preview_key(params):
@@ -259,10 +260,125 @@ def _validate(title='Render settings invalid'):
     return False
 
 
+def _benchmark_fps(ctx, frames=24):
+    if ctx['params']['output_format'] == 'PNG sequence':
+        return None
+    path = os.path.join('export', '_estimate_bench' + export_extension(ctx['params']['output_format']))
+    frame_count = max(ctx['frame_count'], 1)
+    process = start_encoder(ctx, path)
+    if process is None:
+        return None
+    indices = [min(frame_count - 1, int(frame_count * (0.3 + 0.4 * i / max(frames - 1, 1)))) for i in range(frames)]
+    workers = RENDER_WORKERS or max(2, min((os.cpu_count() or 4) // 2, 12))
+    workers = max(1, int(workers))
+
+    def render_frame(index):
+        image = draw_frame(ctx, index)
+        if image is None:
+            return None
+        return image.tobytes()
+
+    start = timeit.default_timer()
+    try:
+        with ThreadPoolExecutor(max_workers=workers) as executor:
+            for blob in executor.map(render_frame, indices):
+                if blob is None:
+                    return None
+                process.stdin.write(blob)
+    except (BrokenPipeError, OSError):
+        return None
+    finally:
+        try:
+            process.stdin.close()
+        except Exception:
+            pass
+        try:
+            process.wait()
+        except Exception:
+            pass
+    elapsed = timeit.default_timer() - start
+    try:
+        os.remove(path)
+    except OSError:
+        pass
+    if elapsed <= 0.0:
+        return None
+    return min(frames / elapsed, 300.0)
+
+
+def _estimate_fps(params):
+    cache_ctx = _preview_cache_ctx
+    if cache_ctx is not None and _preview_cache_key == _preview_key(params):
+        measured = _benchmark_fps(cache_ctx)
+        if measured:
+            return measured, True
+    W = int(params['resolution_width']) or 1280
+    H = int(params['resolution_height']) or 720
+    fps = 100.0 * (1280.0 * 720.0) / max(W * H, 1)
+    if params['effect_glow']:
+        fps *= 0.55
+    if params['effect_trails']:
+        fps *= 0.8
+    if params['bg_blur_pulse']:
+        fps *= 0.7
+    if params['bar_reflection']:
+        fps *= 0.85
+    if params.get('post_effect') and params['post_effect'] != 'None':
+        fps *= 0.5
+    bars = max(int(params['bars']), 1)
+    fps *= (32.0 / bars) ** 0.15
+    return max(fps, 0.5), False
+
+
+def _estimate_render(params):
+    files = [params['input_file']]
+    if params['batch_mode'] and params['batch_files']:
+        batch = [part.strip() for part in str(params['batch_files']).split('|') if part.strip()]
+        if batch:
+            files = batch
+    framerate = _num(params.get('framerate'), 30.0) or 30.0
+    start_time = _num(params.get('audio_start'), 0.0)
+    end_time = _num(params.get('audio_end'), 0.0)
+    total = 0.0
+    for filepath in files:
+        try:
+            probe = ffmpeg.probe(resolve_path(filepath))
+            duration = float(probe.get('format', {}).get('duration') or 0.0)
+        except Exception:
+            duration = 0.0
+        if end_time > start_time:
+            duration = min(duration, end_time) - start_time
+        total += max(duration, 0.0)
+    frames = total * framerate
+    fps, measured = _estimate_fps(params)
+    return frames, frames / max(fps, 1e-9), measured
+
+
+def _confirm_start(message):
+    if HEADLESS:
+        return True
+    box = QtWidgets.QMessageBox(root)
+    box.setWindowTitle('Estimated render time')
+    box.setText(message)
+    box.setStandardButtons(QtWidgets.QMessageBox.StandardButton.Yes | QtWidgets.QMessageBox.StandardButton.No)
+    box.setDefaultButton(QtWidgets.QMessageBox.StandardButton.Yes)
+    return box.exec() == QtWidgets.QMessageBox.StandardButton.Yes
+
+
 def start_render(preview=False):
     if not _validate():
         return
     params = snapshot_values()
+    if not preview and not HEADLESS:
+        frames, seconds, measured = _estimate_render(params)
+        if frames < 1:
+            message = 'Could not estimate the render time.\n\nStart the render?'
+        else:
+            note = 'measured on this machine' if measured else 'rough estimate'
+            message = 'Estimated render time: ~{}\n{} frames at {:.1f} fps ({})\n\nStart the render?'.format(
+                format_eta(seconds), int(round(frames)), frames / max(seconds, 1e-9), note)
+        if not _confirm_start(message):
+            return
     Thread(target=render, args=(preview, params)).start()
 
 
@@ -835,7 +951,7 @@ def prepare_context(filepath, params, preview=False, interrupt_state=None):
         if base_bg is not None:
             base_bg = base_bg.filter(ImageFilter.BoxBlur(radius))
     try:
-        extrema = bg_static.convert('RGB').getextrema()
+        extrema = cast(tuple, bg_static.convert('RGB').getextrema())
         bg_uniform = all(low == high for low, high in extrema)
     except Exception:
         bg_uniform = False
@@ -1508,22 +1624,22 @@ def render(preview=False, params=None):
 
 
 def preview_refresh():
-    global _preview_photo, _preview_image
+    global _preview_photo, _preview_image, _preview_cache_key, _preview_cache_ctx
     if not _validate('Preview settings invalid'):
         return
     try:
         params = snapshot_values()
         filepath = params['input_file']
         key = _preview_key(params)
-        cached = _preview_cache['ctx']
-        if cached is not None and _preview_cache['key'] == key:
+        cached = _preview_cache_ctx
+        if cached is not None and _preview_cache_key == key:
             ctx = cached
         else:
             if cached is not None and cached.get('bg_cache_dir'):
                 shutil.rmtree(cached['bg_cache_dir'], ignore_errors=True)
             ctx = prepare_context(filepath, params, preview=True, interrupt_state={'interrupt': False})
-            _preview_cache['key'] = key
-            _preview_cache['ctx'] = ctx
+            _preview_cache_key = key
+            _preview_cache_ctx = ctx
         frame_no = round(float(params['preview_position'] or 0.0) / 100.0 * (ctx['frame_count'] - 1))
         frame_no = max(0, min(ctx['frame_count'] - 1, frame_no))
         img = draw_frame(ctx, frame_no)
