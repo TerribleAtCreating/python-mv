@@ -1,0 +1,4 @@
+ffmpeg-python>=0.2.0
+numpy>=1.26.0
+Pillow>=10.0.0
+PySide6>=6.6.0
