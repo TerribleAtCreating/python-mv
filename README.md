@@ -18,13 +18,15 @@ Current version: 0.5.0 (see `version.txt`).
 ## Requirements
 
 - Python 3.10 or newer (developed on Python 3.14).
-- Python packages:
-
+- Run one of the following commands to install Python packages:
+  
   ```
   pip install ffmpeg-python numpy Pillow PySide6
   ```
-
-  or `pip install -r requirements.txt`.
+  ```
+  pip install -r requirements.txt
+  ```
+  Note that some libraries may require additional configuration from the user to proceed with the installation.
 - A system **ffmpeg** binary available on `PATH` (`ffmpeg` and `ffprobe`).
 - Hardware encoders (NVENC) additionally require a recent GPU driver.
 
