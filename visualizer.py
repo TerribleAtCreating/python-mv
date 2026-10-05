@@ -1457,7 +1457,7 @@ def render(preview=False, params=None):
             name = os.path.basename(str(filepath or ''))
             _ui(lambda fi=fi, name=name: progress_label.configure(
                 text=f'Rendering file {fi + 1}/{len(files)}: {name}'))
-            ctx = prepare_context(filepath, params, preview=preview, interrupt_state=state)
+            ctx = prepare_context(os.path.join('files', filepath), params, preview=preview, interrupt_state=state)
             frame_count = ctx['frame_count']
             if frame_count < 1:
                 raise ValueError('No frames to render (check audio duration/framerate).')
@@ -1629,7 +1629,7 @@ def preview_refresh():
         return
     try:
         params = snapshot_values()
-        filepath = params['input_file']
+        filepath = os.path.join('files', params['input_file'])
         key = _preview_key(params)
         cached = _preview_cache_ctx
         if cached is not None and _preview_cache_key == key:
