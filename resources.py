@@ -17,9 +17,17 @@ class DialogFiletypes:
 
 BlendingModes = {
     "Additive": ImageChops.add,
-    "Additive (unclipped)": ImageChops.add_modulo,
+    "Additive Modulo": ImageChops.add_modulo,
     "Subtractive": ImageChops.subtract,
-    "Subtractive (unclipped)": ImageChops.subtract_modulo
+    "Subtractive Modulo": ImageChops.subtract_modulo,
+    "Difference": ImageChops.difference,
+    
+    "Lighter": ImageChops.lighter,
+    "Darker": ImageChops.darker,
+
+    "Multiply": ImageChops.multiply,
+    "Screen": ImageChops.screen,
+    "Overlay": ImageChops.overlay,
 }
 
 ResolutionUpscale = {
