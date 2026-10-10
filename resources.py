@@ -21,13 +21,6 @@ BlendingModes = {
     "Subtractive": ImageChops.subtract,
     "Subtractive Modulo": ImageChops.subtract_modulo,
     "Difference": ImageChops.difference,
-    
-    "Lighter": ImageChops.lighter,
-    "Darker": ImageChops.darker,
-
-    "Multiply": ImageChops.multiply,
-    "Screen": ImageChops.screen,
-    "Overlay": ImageChops.overlay,
 }
 
 ResolutionUpscale = {
