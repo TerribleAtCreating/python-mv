@@ -962,9 +962,7 @@ def prepare_context(filepath, params, preview=False, interrupt_state=None):
     watermark_layer = None
     blender = None
     if params['watermark_toggle']:
-        wm_path = params['watermark_file']
-        if not os.path.exists(wm_path):
-            wm_path = os.path.join('files', wm_path)
+        wm_path = os.path.join("files", params['watermark_file'])
         wm = Image.open(wm_path).convert('RGB')
         target = min(W, H) * float(params['watermark_size'])
         scale = target / max(wm.width, wm.height)
